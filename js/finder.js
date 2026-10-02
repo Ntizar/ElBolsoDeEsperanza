@@ -39,12 +39,16 @@
       '  <div class="fc-info">' +
       '    <span class="fc-fecha">' + nombre_fecha(dia.fecha) + " · día " + dia.n + " del año</span>" +
       '    <h3>' + dia.titulo + "</h3>" +
+      '    <div class="tipo-fila">' +
+      '      <span class="tipo">' + (dia.tipo || "Bolso") + "</span>" +
+      '      <span class="rareza">' + (dia.rsimb || "●") + " <b>" + (dia.rareza || "Común") + "</b></span>" +
+      '    </div>' +
       '    <div class="fc-datos">' +
-      "      <span>Precio <b>" + dia.precio + "</b></span>" +
+      "      <span>Precio <b>" + dia.precio + " €</b></span>" +
       "      <span>Nota <b>" + String(dia.rating).replace(".", ",") + "★</b></span>" +
       "      <span><b>" + fmt(dia.n_val) + "</b> valoraciones</span>" +
       "    </div>" +
-      '    <a class="btn vino" href="' + rutaBase + "dia/" + dia.n + '/">Ver el bolso del día →</a>' +
+      '    <a class="btn negro" href="' + rutaBase + "dia/" + dia.n + '/">Ver la carta del día →</a>' +
       "  </div>" +
       "</div>";
   }
@@ -58,7 +62,7 @@
         if (datos.dias[i].n === n) { dia = datos.dias[i]; break; }
       }
       salida.innerHTML = dia ? html_card(dia) :
-        '<p class="finder-vacio">Aún no tenemos el bolso de ese día — el diario sigue creciendo.</p>';
+        '<p class="finder-vacio">Elige una fecha dentro de 2026 para ver su carta.</p>';
     });
   }
 

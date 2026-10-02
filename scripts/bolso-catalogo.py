@@ -33,7 +33,7 @@ F_FICHAS = RAIZ / "data" / "fichas-amazon.json"
 DIR_IMGS = RAIZ / "assets" / "real"
 
 OBJETIVO_DEFECTO = 365
-PRECIOMIN, PRECIOMAX = 12.0, 400.0
+PRECIOMIN, PRECIOMAX = 30.0, 400.0  # piso 30€: la colección crece hacia piezas premium
 RATINGMIN, NVALMIN = 4.0, 30
 TAG = "nti0c8-21"
 
@@ -51,6 +51,13 @@ RE_IMG_ASIN = re.compile(r'/images/I/([A-Za-z0-9+._-]{20,})\.')
 RE_PALABRA = re.compile(r"\bbolso|bandolera|mochila|cartera\b", re.I)
 
 CONSULTAS = [
+    # --- bloque premium primero: cuero genuino, piel y marca ---
+    "bolso cuero genuino mujer", "bolso piel mujer marca", "bolso cuero artesano mujer",
+    "bolso satchel cuero mujer", "bolso tote cuero genuino mujer", "mochila piel mujer",
+    "bolso bandolera piel mujer", "bolso maletin cuero mujer", "bolso cuero vacuno mujer",
+    "bolso hobo cuero mujer", "bolso shopper cuero mujer", "bolso clutch cuero mujer",
+    "bolso cuero grabado mujer", "bolso piel trenzado mujer", "bolso estilo vintage cuero mujer",
+    # --- bloque general ---
     "bolso tote cuero mujer", "bolso bandolera cuero mujer", "mochila cuero mujer",
     "bolso mano mujer cuero autentico", "bolso hobo mujer", "bolso clutch mujer fiesta",
     "bolso Bandolera peque\u00f1o mujer", "bolso shopper mujer", "bolso satchel mujer",
