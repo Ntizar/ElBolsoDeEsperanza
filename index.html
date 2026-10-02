@@ -10,10 +10,10 @@
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <!-- Styles -->
-<link rel="stylesheet" href="css/styles.css?v=20261002a">
+<link rel="stylesheet" href="css/styles.css?v=20261003a">
 
 <!-- JSON-LD -->
 <script type="application/ld+json">
@@ -36,34 +36,29 @@
 
 <!-- NAV -->
 <nav class="nav" id="nav">
-  <a href="/" class="nav-brand">El Bolso de <span>Esperanza</span></a>
-  <ul class="nav-links">
-    <li><a href="#bolsos">Los Bolsos</a></li>
-    <li><a href="#blog">El Diario</a></li>
-  </ul>
-  <span class="nav-counter">5 entradas</span>
+  <a href="/" class="nav-logo">El Bolso de <span>Esperanza</span></a>
+  <div class="nav-menu" id="nav-menu">
+    <a href="#bolsos">Los Bolsos</a>
+    <a href="#blog">El Diario</a>
+    <a href="#" onclick="document.getElementById('nav-menu').classList.remove('open'); return false;">Cerrar</a>
+  </div>
+  <button onclick="document.getElementById('nav-menu').classList.toggle('open')" style="background:none;border:none;font-size:24px;cursor:pointer;padding:4px;color:var(--negro)">☰</button>
 </nav>
 
 <!-- HERO -->
 <section class="hero" id="hero">
-  <div class="hero-text">
+  <div class="hero-content">
     <div class="hero-overline handwritten">Un bolso nuevo cada día</div>
     <h1 class="hero-title">
       Mi vida está<br>en mis <em>bolsos</em>
     </h1>
-    <p class="hero-subtitle">
+    <p class="hero-sub">
       Soy Esperanza. Llevo un bolso diferente cada día desde que empacó mi vida en una maleta y me fui a Madrid.
     </p>
     <p class="hero-bio">
       No es un reto de Instagram. No es marketing. Es un diario real donde cada bolso cuenta la historia de lo que me pasó ese día. Porque un bolso no es solo un accesorio — es la memoria de lo que viviste.
     </p>
-    <a href="#bolsos" class="hero-cta">Descubrir los bolsos ↓</a>
-  </div>
-  <div class="hero-image">
-    <img src="https://38f9cd01dec7d1d1807eace23c4f00a4.r2.cloudflarestorage.com/nan-images-prod/users/63b86175-cba7-4f20-ba97-649e0f593049/images/1790941966387236882-cd7343e7559d.jpg" alt="Esperanza con bolso" onerror="this.style.display='none'">
-    <div class="quote-float handwritten">
-      "Cada bolso tiene una historia. Y cada historia me cambió para siempre."
-    </div>
+    <a href="#bolsos" class="btn-primary">Descubrir los bolsos ↓</a>
   </div>
 </section>
 
@@ -110,7 +105,7 @@
   <p>
     Cada bolso que llevas es una frase sin palabras. Comparte la tuya.
   </p>
-  <a href="#bolsos" class="btn-white">Ver los bolsos →</a>
+  <a href="#bolsos" class="btn-primary">Ver los bolsos →</a>
 </section>
 
 <!-- BLOG PREVIEW -->
@@ -126,7 +121,7 @@
     <!-- Rendered by JS -->
   </div>
   <div style="text-align:center; margin-top:40px;">
-    <a href="blog/index.html" class="hero-cta" style="background:transparent; border:1px solid var(--negro-tinta); color:var(--negro-tinta);">
+    <a href="blog/index.html" class="btn-primary" style="background:transparent; border:1px solid var(--negro); color:var(--negro);">
       Ver todo el diario →
     </a>
   </div>
@@ -134,16 +129,16 @@
 
 <!-- FOOTER -->
 <footer class="site-footer">
-  <p>El Bolso de Esperanza — Hecho con ❤️ por David Antizar.</p>
+  <p>El Bolso de Esperanza — El diario de una mujer y sus bolsos.</p>
   <p class="disclosure">
     Disclosure: Este sitio contiene enlaces de afiliado de Amazon. Si compras a través de ellos, puedo recibir una comisión sin coste adicional para ti. Solo recomiendo bolsos que me gustan de verdad.
   </p>
 </footer>
 
 <!-- Scripts -->
-<script src="js/state.js?v=20261002a"></script>
-<script src="js/ui.js?v=20261002a"></script>
-<script src="js/main.js?v=20261002a"></script>
+<script src="js/state.js?v=20261003a"></script>
+<script src="js/ui.js?v=20261003a"></script>
+<script src="js/main.js?v=20261003a"></script>
 
 </body>
 </html>
