@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Diario — El Bolso de Esperanza</title>
+<meta name="description" content="Lee las historias detrás de cada bolso. Un diario diario de Esperanza.">
+<link rel="canonical" href="https://ntizar.github.io/ElBolsoDeEsperanza/blog/">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css?v=20261002a">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  "name": "El Diario — El Bolso de Esperanza",
+  "url": "https://ntizar.github.io/ElBolsoDeEsperanza/blog/"
+}
+</script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <a href="../" class="nav-brand">El Bolso de <span>Esperanza</span></a>
+  <ul class="nav-links">
+    <li><a href="../#bolsos">Los Bolsos</a></li>
+    <li><a href="../">Inicio</a></li>
+  </ul>
+  <span class="nav-counter" id="entries-count">0 entradas</span>
+</nav>
+
+<!-- BLOG HEADER -->
+<section class="section" style="padding-top:120px;">
+  <div class="section-center">
+    <div class="section-label handwritten">El Diario</div>
+    <h1 class="section-title" style="font-size:clamp(36px,5vw,56px);">
+      Lo que me pasó<br>con <em style="font-family:var(--fuente-hand); color:var(--rosa-fuerte);">cada bolso</em>
+    </h1>
+    <p class="section-desc">
+      Un diario íntimo donde cada bolso tiene un día, una fecha y una historia. Aquí las cuento todas.
+    </p>
+  </div>
+</section>
+
+<!-- BLOG LIST -->
+<section class="section" style="padding-top:0;">
+  <div class="blog-list" id="blog-list">
+    <!-- Rendered by JS -->
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <p>El Bolso de Esperanza — Hecho con ❤️ por David Antizar.</p>
+  <p class="disclosure">
+    Disclosure: Este sitio contiene enlaces de afiliado de Amazon. Si compras a través de ellos, puedo recibir una comisión sin coste adicional para ti.
+  </p>
+</footer>
+
+<script src="../js/state.js?v=20261002a"></script>
+<script src="../js/ui.js?v=20261002a"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadData();
+  
+  const list = document.getElementById('blog-list');
+  if (list) renderBlogList(list);
+  
+  const counter = document.getElementById('entries-count');
+  if (counter) counter.textContent = APP.blog.length + ' entradas';
+  
+  initNavScroll();
+});
+</script>
+
+</body>
+</html>

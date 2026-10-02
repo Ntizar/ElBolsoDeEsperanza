@@ -1,0 +1,63 @@
+{
+  "meta": {
+    "sitio": "El Bolso de Esperanza",
+    "descripcion": "Un bolso nuevo cada día. Mi vida, mis historias, mi bolso."
+  },
+  "entradas": [
+    {
+      "slug": "dia-001",
+      "titulo": "El bolso que me dejó mi madre",
+      "fecha": "2026-04-15",
+      "dia": 1,
+      "bolsos": "el-bolso-de-mama",
+      "resumen": "Mi madre me dejó su bolso de 40 años. No tiene marca, no tiene etiqueta, pero contiene más vida que cualquier bolso de lujo del mundo.",
+      "extracto": "Era un bolso que tenía 40 años, que fue de mi madre cuando ella tenía mi edad, y que ahora llevo a todas partes porque cada vez que lo abro me recuerda que soy fuerte.",
+      "autor": "Esperanza",
+      "leido": "2 min"
+    },
+    {
+      "slug": "dia-002",
+      "titulo": "El bolso que llevé a la primera cita",
+      "fecha": "2026-04-16",
+      "dia": 2,
+      "bolsos": "bolsa-primera-cita",
+      "resumen": "Me lo compré con mi primer sueldo. Un pochette pequeño, discreto, que casi no cabía en la mano. Esa noche conocí a alguien que me cambió la vida.",
+      "extracto": "Me lo compré con mi primer sueldo. Un pochette pequeño, discreto, que casi no cabía en la mano.",
+      "autor": "Esperanza",
+      "leido": "2 min"
+    },
+    {
+      "slug": "dia-003",
+      "titulo": "El bolso que me acompañó a la mudanza a Madrid",
+      "fecha": "2026-04-17",
+      "dia": 3,
+      "bolsos": "bolsa-mudanza",
+      "resumen": "De Alicante a Madrid. 672 kilómetros, un coche prestado y este bolso bandolera colgado del hombro mientras el sol se ponía.",
+      "extracto": "De Alicante a Madrid. 672 kilómetros, un coche prestado y este bolso bandolera colgado del hombro mientras el sol se ponía.",
+      "autor": "Esperanza",
+      "leido": "3 min"
+    },
+    {
+      "slug": "dia-004",
+      "titulo": "El bolso que me compré cuando me ascendieron",
+      "fecha": "2026-04-18",
+      "dia": 4,
+      "bolsos": "bolsa-promocion",
+      "resumen": "Después de tres años pidiendo ascensos que no llegaban, el día que me lo concedieron entré en la tienda más cara del centro y sin dudarlo pagué.",
+      "extracto": "Después de tres años pidiendo ascensos que no llegaban, el día que me lo concedieron entré en la tienda más cara del centro.",
+      "autor": "Esperanza",
+      "leido": "2 min"
+    },
+    {
+      "slug": "dia-005",
+      "titulo": "El bolso del regalo que me hice yo misma",
+      "fecha": "2026-04-19",
+      "dia": 5,
+      "bolsos": "bolsa-navidad",
+      "resumen": "No esperé a que nadie me lo regalara. Me lo compré el 23 de diciembre a las 11 de la noche, con las navidades ya empezadas, y lo abrí sola.",
+      "extracto": "No esperé a que nadie me lo regalara. Me lo compré el 23 de diciembre a las 11 de la noche.",
+      "autor": "Esperanza",
+      "leido": "2 min"
+    }
+  ]
+}
