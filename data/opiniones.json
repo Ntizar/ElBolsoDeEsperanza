@@ -1,0 +1,134 @@
+{
+  "meta": {
+    "sitio": "El Bolso de Esperanza",
+    "descripcion": "Lo que opinan las lectoras (y los lectores) de los bolsos del diario."
+  },
+  "opiniones": [
+    {
+      "bolso": "bolsa-tote-ejecutivo",
+      "nombre": "Marta R.",
+      "ciudad": "Madrid",
+      "puntuacion": 5,
+      "titulo": "Me convirtió en la reunión",
+      "texto": "Llevo tres meses con él y lo uso para todo. Cabe el portátil, el neceser y hasta la fiambrera. El cuero ha cogido un bruto precioso. La historia de Esperanza me lo vendió, pero lo que me quedo es el bolso.",
+      "fecha": "2026-05-02"
+    },
+    {
+      "bolso": "bolsa-tote-ejecutivo",
+      "nombre": "Lucía G.",
+      "ciudad": "Valencia",
+      "puntuacion": 4,
+      "titulo": "Grande de verdad",
+      "texto": "Ojo, es enorme. Si vienes de un bolso mediano tardas una semana en acostumbrarte. Pero el cuero es macizo y los herrajes no se rayan. Por lo que cuesta, no tiene rival.",
+      "fecha": "2026-05-10"
+    },
+    {
+      "bolso": "bolsa-crossbody-noche",
+      "nombre": "Carmen P.",
+      "ciudad": "Sevilla",
+      "puntuacion": 5,
+      "titulo": "Se me olvida que lo llevo",
+      "texto": "Pesa nada y se ajusta al cuerpo, no baila. Para cenas y terrazas es perfecto: coche, móvil, labial y ni un gramo de más. Lo del cierre interior es un detallazo.",
+      "fecha": "2026-05-14"
+    },
+    {
+      "bolso": "bolsa-crossbody-noche",
+      "nombre": "Ana S.",
+      "ciudad": "Bilbao",
+      "puntuacion": 4,
+      "titulo": "Elegante pero pequeño",
+      "texto": "Precioso, cuero fino de verdad. Solo aviso: si llevas teléfono grande con funda, entra justo. Para lo demás, diez.",
+      "fecha": "2026-05-21"
+    },
+    {
+      "bolso": "bolsa-pochette-cita",
+      "nombre": "Rocío M.",
+      "ciudad": "Málaga",
+      "puntuacion": 5,
+      "titulo": "El accesorio que levanta cualquier look",
+      "texto": "Lo uso de bolso suelto dentro del tote en el trabajo y solo por la noche. Dos bolsos por el precio de uno. El color es exactamente el de las fotos.",
+      "fecha": "2026-05-28"
+    },
+    {
+      "bolso": "bolsa-bandolera-madrid",
+      "nombre": "Inés T.",
+      "ciudad": "Alicante",
+      "puntuacion": 5,
+      "titulo": "Compañera de mudanza también yo",
+      "texto": "Yo también me mudé con esta bandolera al hombro. Aguantó 600 km, dos gasolineras y una discusión en la redonda. El cuero sigue entero. Cinco estrellas por lo que ha vivido.",
+      "fecha": "2026-06-03"
+    },
+    {
+      "bolso": "bolsa-bandolera-madrid",
+      "nombre": "Pablo H.",
+      "ciudad": "Madrid",
+      "puntuacion": 4,
+      "titulo": "Lo uso yo y me lo roba ella",
+      "texto": "Lo compré unisex y acabó siendo de los dos. Correa cómoda, bolsa plana útil. Se echa en falta una segunda bolsa interior.",
+      "fecha": "2026-06-11"
+    },
+    {
+      "bolso": "bolsa-clutch-gala",
+      "nombre": "Elena V.",
+      "ciudad": "Madrid",
+      "puntuacion": 5,
+      "titulo": "Por fin una clutch que no parece de boda barata",
+      "texto": "Cadena removible de verdad, no de juguete. El acabado mate hace que parezca el triple de caro. Fui a una gala con vestido negro y fue EL complemento. Me pidieron marca tres veces.",
+      "fecha": "2026-06-18"
+    },
+    {
+      "bolso": "bolsa-saddle-vintage",
+      "nombre": "Teresa L.",
+      "ciudad": "Zaragoza",
+      "puntuacion": 5,
+      "titulo": "Como el de mi madre",
+      "texto": "Buscaba exactamente esto: una saddle con alma, no una réplica plastificada. El cuero tiene ese olor a tienda de confianza. La historia de la herencia me llegó, porque el mío también fue de mi madre.",
+      "fecha": "2026-06-25"
+    },
+    {
+      "bolso": "bolsa-tote-viaje",
+      "nombre": "Nuria C.",
+      "ciudad": "Barcelona",
+      "puntuacion": 5,
+      "titulo": "Aguanta aeropuertos",
+      "texto": "Cuatro vuelos en un mes, cabina entera siempre. Pesa poco vacío y el asa no se corta el hombro. Para mi bolsa de cabina oficial ya no hay otro.",
+      "fecha": "2026-07-02"
+    },
+    {
+      "bolso": "bolsa-tote-viaje",
+      "nombre": "Sofía A.",
+      "ciudad": "A Coruña",
+      "puntuacion": 4,
+      "titulo": "Muy bien, con un pero",
+      "texto": "Calidad excelente por el precio. Le faltaría una funda para lluvia, que en A Coruña es tema serio. Por lo demás, perfecto: cabe portátil de 14 con cargador.",
+      "fecha": "2026-07-09"
+    },
+    {
+      "bolso": "bolsa-mochila-adventure",
+      "nombre": "Daniela F.",
+      "ciudad": "Murcia",
+      "puntuacion": 4,
+      "titulo": "Para el día a día cómodo",
+      "texto": "La compré tras leer la historia del préstamo (me ha pasado igual, tres veces). Es cómoda, moderna, y aguanta gimnasio y oficina. Los tiradores ya se notan algo sueltos al mes, ojo.",
+      "fecha": "2026-07-15"
+    },
+    {
+      "bolso": "bolsa-hobo-lujo",
+      "nombre": "Verónica J.",
+      "ciudad": "Sevilla",
+      "puntuacion": 5,
+      "titulo": "Blando y con carácter",
+      "texto": "No es un bolso que se mantenga tieso: se amolda a ti. Justo lo que buscaba para días de batalla. Y la historia de Esperanza… la leí dos veces. Compré el bolso, me quedé con el diario.",
+      "fecha": "2026-07-22"
+    },
+    {
+      "bolso": "bolsa-hobo-lujo",
+      "nombre": "Alba D.",
+      "ciudad": "Granada",
+      "puntuacion": 5,
+      "titulo": "Mi día a día",
+      "texto": "Entra todo y el cuero es un espectáculo al tacto. Se arruga con el uso y a mí me encanta, le da vida. Lo recomiendo sin dudar.",
+      "fecha": "2026-07-30"
+    }
+  ]
+}

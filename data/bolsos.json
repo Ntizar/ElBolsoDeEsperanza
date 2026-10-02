@@ -8,138 +8,137 @@
   "bolsos": [
     {
       "id": "bolsa-tote-ejecutivo",
-      "slug": "el-bolsa-del-ascenso",
+      "slug": "el-bolso-del-ascenso",
       "titulo": "El bolso que me compré cuando me ascendieron a directora",
       "icono": "👜",
       "resumen": "Era un bolso grande, de señora grande, de esos que ocupan medio armario. Lo compré el mismo día que me llamaron a la oficina del CEO. No fue un capricho. Fue una promesa.",
       "precio_aprox": "350 €",
       "prioridad": "esencial",
       "afiliado": "https://www.amazon.es/dp/B0DPCQXCSK?tag=nti0c8-21",
-      "busqueda": "https://www.amazon.es/s?k=tote+cuero+lujo+caro+señora&tag=nti0c8-21",
+      "busqueda": "https://www.amazon.es/s?k=tote+cuero+lujo+mujer&tag=nti0c8-21",
       "es_busqueda": true,
-      "secciones": [
-        "El bolso",
-        "Mi historia"
-      ],
+      "imagen": "assets/bolso-tote-ejecutivo.jpg",
+      "secciones": ["El bolso", "Mi historia"],
       "rating": 5
     },
     {
       "id": "bolsa-crossbody-noche",
-      "slug": "el-bolsa-de-la-noche",
-      "titulo": "El bolso que llevé a la cena con el cliente que me tocó el culo",
+      "slug": "el-bolso-de-la-noche",
+      "titulo": "El bolso que llevé a la cena con el cliente que no dejaba de mirarme",
       "icono": "🍷",
-      "resumen": "Era un bolso pequeño, negro, de cuero fino. Lo llevaba cruzado del hombro porque el hombre que sentaba a mi derecha tenía las manos que me recordaban a la noche anterior.",
+      "resumen": "Era un bolso pequeño, negro, de cuero fino. Lo llevaba cruzado del hombro, bien sujeto contra el costado, como quien lleva una coraza. Esa noche aprendí que un bolso también puede ser un escudo.",
       "precio_aprox": "280 €",
       "prioridad": "esencial",
       "afiliado": "https://www.amazon.es/dp/B0HHN4SV2B?tag=nti0c8-21",
       "busqueda": "https://www.amazon.es/s?k=crossbody+negro+cuero+noche+elegante&tag=nti0c8-21",
       "es_busqueda": true,
-      "secciones": [
-        "El bolso",
-        "Mi historia"
-      ],
+      "imagen": "assets/bolso-crossbody-noche.jpg",
+      "secciones": ["El bolso", "Mi historia"],
       "rating": 4
     },
     {
       "id": "bolsa-pochette-cita",
-      "slug": "el-bolsa-primera-cita",
+      "slug": "el-bolso-primera-cita",
       "titulo": "El bolso que llevé a la primera cita con el jefe de otro departamento",
       "icono": "💋",
-      "resumen": "Me lo compré con mi primer sueldo. Un pochette diminuto, de esos que casi no caben en la mano. No cabía ni el móvil más pequeño. Solo cabía lo estrictamente necesario.",
+      "resumen": "Me lo compré con mi primer sueldo. Un pochette diminuto, de esos que casi no caben en la mano. No cabía ni el móvil más grande. Solo cabía lo estrictamente necesario.",
       "precio_aprox": "180 €",
       "prioridad": "esencial",
       "afiliado": "https://www.amazon.es/dp/B0DFCPQ7FB?tag=nti0c8-21",
       "busqueda": "https://www.amazon.es/s?k=pochette+cuero+femenino+elegante+noche&tag=nti0c8-21",
       "es_busqueda": true,
-      "secciones": [
-        "El bolso",
-        "Mi historia"
-      ],
+      "imagen": "assets/bolso-pochette-primera-cita.jpg",
+      "secciones": ["El bolso", "Mi historia"],
       "rating": 5
     },
     {
       "id": "bolsa-bandolera-madrid",
-      "slug": "el-bolsa-mudanza",
-      "titulo": "El bolso que me acompañó a la mudanza a Madrid para dejar a mi novio",
+      "slug": "el-bolso-mudanza",
+      "titulo": "El bolso que me acompañó a la mudanza a Madrid para empezar de cero",
       "icono": "🏠",
-      "resumen": "De Alicante a Madrid. 672 kilómetros, un coche prestado y este bolso bandolera colgado del hombro mientras el sol se ponía. Era lo único que llevaba conmigo de verdad.",
+      "resumen": "De Alicante a Madrid. 672 kilómetros, un coche prestado y este bolso bandolera colgada del hombro mientras el sol se ponía. Era lo único que llevaba conmigo de verdad.",
       "precio_aprox": "250 €",
       "prioridad": "esencial",
       "afiliado": "https://www.amazon.es/dp/B07BHC4Q2S?tag=nti0c8-21",
-      "busqueda": "https://www.amazon.es/s?k=bolsa+bandolera+cuero+autentico+madrid&tag=nti0c8-21",
+      "busqueda": "https://www.amazon.es/s?k=bandolera+cuero+autentico+mujer&tag=nti0c8-21",
       "es_busqueda": true,
-      "secciones": [
-        "El bolso",
-        "Mi historia"
-      ],
+      "imagen": "assets/bolso-bandolera-madrid.jpg",
+      "secciones": ["El bolso", "Mi historia"],
       "rating": 4
     },
     {
       "id": "bolsa-clutch-gala",
-      "slug": "el-bolsa-gala",
+      "slug": "el-bolso-gala",
       "titulo": "El bolso del que me fui a la gala sin nadie a mi lado",
       "icono": "✨",
-      "resumen": "Fue el 23 de diciembre. Las navidades ya habían empezado en casa de mis padres — risas, vino — y yo estaba sentada en mi habitación con un vaso de vino y la tele apagada.",
+      "resumen": "Fue el 23 de diciembre. Las navidades ya habían empezado en casa de mis padres — risas, vino — y yo estaba sentada en mi habitación con un vaso de vino y la tele apagada. Me arreglé igual. Fui igual. Volví distinta.",
       "precio_aprox": "420 €",
       "prioridad": "esencial",
       "afiliado": "https://www.amazon.es/dp/B07X9DZDKQ?tag=nti0c8-21",
       "busqueda": "https://www.amazon.es/s?k=clutch+noche+cuero+lujo+femenino&tag=nti0c8-21",
       "es_busqueda": true,
-      "secciones": [
-        "El bolso",
-        "Mi historia"
-      ],
+      "imagen": "assets/bolso-clutch-gala.jpg",
+      "secciones": ["El bolso", "Mi historia"],
+      "rating": 5
+    },
+    {
+      "id": "bolsa-saddle-vintage",
+      "slug": "el-bolso-vintage",
+      "titulo": "El bolso que heredé de mi madre y que no vendo por todo el dinero del mundo",
+      "icono": "🕰️",
+      "resumen": "Estaba en el fondo del armario de casa, envuelto en un pañuelo. Saddle, cuero curtido, herrajes que ya no se hacen así. Lo llevé a tasar y el dependiente me dijo que no lo vendiera nunca. No pienso hacerlo.",
+      "precio_aprox": "210 €",
+      "prioridad": "recomendado",
+      "afiliado": "https://www.amazon.es/s?k=bolso+saddle+vintage+cuero+mujer&tag=nti0c8-21",
+      "busqueda": "https://www.amazon.es/s?k=bolso+saddle+vintage+cuero+mujer&tag=nti0c8-21",
+      "es_busqueda": true,
+      "imagen": "assets/bolso-saddle-vintage.jpg",
+      "secciones": ["El bolso", "Mi historia"],
       "rating": 5
     },
     {
       "id": "bolsa-tote-viaje",
-      "slug": "el-bolsa-viaje",
+      "slug": "el-bolso-viaje",
       "titulo": "El bolso que me llevó a la conferencia que cambió mi carrera",
       "icono": "✈️",
-      "resumen": "De Alicante a Madrid. 672 kilómetros, un coche prestado y este bolso bandolera colgado del hombro mientras el sol se ponía.",
+      "resumen": "Billete de ida y vuelta, portátil, un cuaderno con la primera página en blanco y este tote que aguanta todo. En la fila de embarque entendí que mi carrera iba a cambiar. Volví con otro plan.",
       "precio_aprox": "310 €",
       "prioridad": "esencial",
       "afiliado": "https://www.amazon.es/dp/B0CJHHRFSS?tag=nti0c8-21",
-      "busqueda": "https://www.amazon.es/s?k=tote+cuero+viaje+conferencia+profesional&tag=nti0c8-21",
+      "busqueda": "https://www.amazon.es/s?k=tote+cuero+viaje+trabajo+profesional&tag=nti0c8-21",
       "es_busqueda": true,
-      "secciones": [
-        "El bolso",
-        "Mi historia"
-      ],
+      "imagen": "assets/bolso-tote-viaje.jpg",
+      "secciones": ["El bolso", "Mi historia"],
       "rating": 5
     },
     {
       "id": "bolsa-mochila-adventure",
-      "slug": "el-bolsa-aventura",
-      "titulo": "El bolso que me presté a mi compañera de trabajo para su fiesta",
+      "slug": "el-bolso-prestado",
+      "titulo": "El bolso que me pidió mi amiga para una fiesta y que tardó dos semanas en volver",
       "icono": "🎉",
-      "resumen": "Me lo pidió mi compañera de piso. Ella me lo había pedido para la fiesta de cumpleaños de su chico. Le dije que sí, pero no sabía que me lo iba a dejar un par de semanas.",
+      "resumen": "Me lo pidió mi compañera de piso para la fiesta de cumpleaños de su chico. Le dije que sí sin pensarlo. Lo vi aparecer en sus fotos, en su cena, en su fin de semana. Dos semanas tardó en devolvérmelo. Yo ya había pedido otro.",
       "precio_aprox": "190 €",
       "prioridad": "recomendado",
       "afiliado": "https://www.amazon.es/dp/B0DJKVDYW?tag=nti0c8-21",
-      "busqueda": "https://www.amazon.es/s?k=mochila+cuero+femenina+trendy+moderna&tag=nti0c8-21",
+      "busqueda": "https://www.amazon.es/s?k=mochila+cuero+femenina+moderna&tag=nti0c8-21",
       "es_busqueda": true,
-      "secciones": [
-        "El bolso",
-        "Mi historia"
-      ],
+      "imagen": "assets/bolso-mochila-adventure.jpg",
+      "secciones": ["El bolso", "Mi historia"],
       "rating": 4
     },
     {
       "id": "bolsa-hobo-lujo",
-      "slug": "el-bolsa-hobo",
-      "titulo": "El bolso que compré después de la denuncia",
+      "slug": "el-bolso-denuncia",
+      "titulo": "El bolso que llevé el día que presenté la denuncia",
       "icono": "📋",
-      "resumen": "El día que presenté la denuncia por acoso en la empresa, no supe qué hacer con el bolso que llevaba puesto. Era un bolso de señora, de esos grandes que no sabes cómo llevar.",
+      "resumen": "El día que presenté la denuncia por acoso en la empresa, no supe qué hacer con las manos. Elegí este bolso hobo, desestructurado, blando. Un bolso que no se mantiene firme. Como yo esa mañana. Y aun así fui.",
       "precio_aprox": "260 €",
       "prioridad": "esencial",
       "afiliado": "https://www.amazon.es/dp/B0CL593HP6?tag=nti0c8-21",
-      "busqueda": "https://www.amazon.es/s?k=hobo+bag+cuero+desestructurado+lujo&tag=nti0c8-21",
+      "busqueda": "https://www.amazon.es/s?k=hobo+bag+cuero+desestructurado&tag=nti0c8-21",
       "es_busqueda": true,
-      "secciones": [
-        "El bolso",
-        "Mi historia"
-      ],
+      "imagen": "assets/bolso-hobo-lujo.jpg",
+      "secciones": ["El bolso", "Mi historia"],
       "rating": 5
     }
   ]
