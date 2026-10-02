@@ -1,230 +1,168 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generador del sitio "El Bolso de Esperanza" — sistema portado de kit72h.
-Lee data/bolsos.json, data/blog.json y data/opiniones.json y regenera:
-  - index.html            (home: hero + bolsos + diario + opiniones + cta)
-  - blog/index.html       (índice del diario)
-  - blog/<slug>/index.html (9 entradas con historia completa + producto + opiniones)
-  - opiniones/index.html  (índice de opiniones por bolso)
-  - bolso/<id>/index.html (ficha de cada bolso con sus opiniones)
+Generador del sitio "El Bolso de Esperanza" v4 — repositorio de 365 bolsos.
+Lee data/bolsos.json (bolsos reales scrapeados de Amazon) y regenera:
+  - index.html            (landing: bolso del DÍA + buscador de cumpleaños + próximos/últimos)
+  - dia/index.html        (índice del diario: todos los días)
+  - dia/<n>/index.html    (página de cada día: historia + bolso real del día)
+  - bolso/<id>/index.html (ficha de cada bolso: pros/contras reales + opiniones)
+  - opiniones/index.html  (índice de opiniones reales)
+  - buscar/index.html     (buscador "¿qué bolso me tocó el día que nací?")
+  - data/finder-data.json (datos para el buscador JS)
   - sitemap.xml
-Idempotente: se puede correr las veces que haga falta.
+El día N del año (en bucle) recibe el bolso N del repositorio ordenado por calidad;
+si el repositorio tiene menos de 365 bolsos, los días se reciclan con alternos.
+Idempotente. Uso: python scripts/generar-sitio.py
 """
 import json
-import os
-import sys
+import hashlib
+from datetime import date, timedelta
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-VER = "20261002a"  # versión del CSS — bump en cada cambio de estilos
+VER = "20261002d"
 DOMINIO = "https://ntizar.github.io/ElBolsoDeEsperanza"
+ANIO = 2026
 
-# ---------------------------------------------------------------- carga de datos
+DIAS_SEMANA = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+         "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
 
-def cargar(nombre):
-    with open(RAIZ / "data" / nombre, encoding="utf-8") as f:
-        return json.load(f)
+# ---------------------------------------------------------------- datos
 
-BOLSOS = cargar("bolsos.json")["bolsos"]
-BLOG = cargar("blog.json")["entradas"]
-OPINIONES = cargar("opiniones.json")["opiniones"]
+def cargar():
+    d = json.loads((RAIZ / "data" / "bolsos.json").read_text(encoding="utf-8"))
+    bolsos = d["bolsos"]
+    # orden de calidad: nota desc, nº valoraciones desc, precio desc (desempates estables)
+    bolsos.sort(key=lambda b: (-(b.get("rating") or 0), -(b.get("n_valoraciones") or 0),
+                               -(b.get("precio_num") or 0)))
+    return bolsos
 
+BOLSOS = cargar()
+N = len(BOLSOS)
 BOLSO_POR_ID = {b["id"]: b for b in BOLSOS}
-BOLSO_POR_SLUG = {b["slug"]: b for b in BOLSOS}
-ENTRADA_POR_BOLSO = {e["bolso"]: e for e in BLOG}
 
-def opiniones_de(bolso_id):
-    return [o for o in OPINIONES if o["bolso"] == bolso_id]
+def fecha_de_dia(n):
+    return date(ANIO, 1, 1) + timedelta(days=n - 1)
 
-def estrellas(n):
-    return "★" * n + "☆" * (5 - n)
+def fecha_larga(d):
+    return f"{d.day} de {MESES[d.month - 1]} de {d.year}"
 
-def fecha_larga(fecha):
-    MESES = ["enero","febrero","marzo","abril","mayo","junio","julio",
-             "agosto","septiembre","octubre","noviembre","diciembre"]
-    anio, mes, dia = fecha.split("-")
-    return f"{int(dia)} de {MESES[int(mes)-1]} de {anio}"
+def bolso_del_dia(n):
+    """Bolso del día n (bucle). Si el repo no llega a 365, añade alternos estables."""
+    idx = (n - 1) % N
+    b = BOLSOS[idx]
+    alternos = []
+    if N < 365:
+        saltos = (n * 37 + 11) % N
+        usados = {b["id"]}
+        for k in range(1, min(N, 6)):
+            alt = BOLSOS[(idx + saltos * k) % N]
+            if alt["id"] not in usados:
+                alternos.append(alt)
+                usados.add(alt["id"])
+    return b, alternos
 
-def url_afiliado(bolso):
-    return bolso.get("afiliado") or bolso.get("busqueda")
+def dia_hash(n):
+    """Firma estable por día: para variar textos sin reescribirlos en cada regeneración."""
+    return int(hashlib.md5(f"esperanza-{n}".encode()).hexdigest(), 16)
 
-# ---------------------------------------------------------------- cuerpos narrativos
-# Cada entrada: resumen, secciones [(h2, [párrafos])], cita
+# ---------------------------------------------------------------- pros/contras reales
 
-POSTS = {
-    "dia-001": {
-        "resumen": "Era un bolso grande, de señora grande, de esos que ocupan medio armario. Lo compré el mismo día que me llamaron a la oficina del CEO.",
-        "secciones": [
-            ("El bolso", [
-                "Entré en la tienda de lujo de Gran Vía, la de las mujeres que ya no necesitan demostrar nada. Pedí el bolso más grande que tenían. El dependiente me lo trajo envuelto en papel de seda y yo lo toqué como se toca algo que uno sabe suyo antes de pagarlo.",
-                "Tote de cuero grueso, herrajes dorados, forro que huele a tienda seria. Cabe el portátil, el neceser, una carpeta entera con los informes del trimestre. Y sobra sitio, que era justo lo que quería: sitio para todo lo que venía.",
-            ]),
-            ("Mi historia", [
-                "Ese mismo día me habían comunicado el ascenso. Tres años pidiéndolo. Tres años viendo pasar el puesto por delante de mí en manos de hombres que llegaban más tarde y se marchaban antes. Cuando colgué el teléfono salí a la calle y no lloré. Fui directa a la tienda.",
-                "Lo llevé a la oficina a la mañana siguiente y lo dejé sobre la mesa en la primera reunión. No para presumir. Para que ocupara el lugar que le correspondía — al bolso y a mí.",
-            ]),
-        ],
-        "cita": "No pedí un ascenso durante tres años por un bolso. Lo pedí porque sabía que lo merecía.",
-    },
-    "dia-002": {
-        "resumen": "Era un bolso pequeño, negro, de cuero fino. Lo llevaba cruzado del hombro, bien sujeto contra el costado, como quien lleva una coraza.",
-        "secciones": [
-            ("El bolso", [
-                "Negro, de cuero fino, con una correa larga que permite llevarlo cruzado y pegado al cuerpo. Es el bolso más pequeño que poseo y el que más veces me ha salvado la noche.",
-                "Cabe el móvil, las llaves, un labial y ni un gramo más. Y el cierre interior tiene un truco: se cierra con un giro que no se abre solo. Lo aprendí a valorar en cenas como la de esta historia.",
-            ]),
-            ("Mi historia", [
-                "Era una cena de trabajo. De esas donde la conversación empieza por el proyecto y acaba derrotando al vino. El cliente de mi derecha tenía esas manos que se acercan demasiado cuando rien, y esa manera de mirar el escote de las demás cuando creen que nadie las mira.",
-                "Aquella noche entendí que un bolso cruzado no es un accesorio: es una frontera. Lo llevaba pegado al costado como quien lleva una coraza, y con la mano encima como quien sostiene su posición.",
-            ]),
-        ],
-        "cita": "Hay bolsos que se compran por bonitos. Este lo compré por lo que protege.",
-    },
-    "dia-003": {
-        "resumen": "Me lo compré con mi primer sueldo. Un pochette diminuto, de esos que casi no caben en la mano. Solo cabía lo estrictamente necesario.",
-        "secciones": [
-            ("El bolso", [
-                "Un pochette. Diminuto, rígido, con la cadena corta. De esos que parecen un capricho y son una declaración: aquí cabe solo lo esencial, y lo esencial soy yo.",
-                "No cabe ni el móvil más grande de hoy. Cabe un labial, una tarjeta y las llaves. Nada más. Es el bolso de las primeras veces: primeras citas, primeras cenas, primeros pasos que importan.",
-            ]),
-            ("Mi historia", [
-                "Lo compré con mi primer sueldo serio, en una semana donde por fin me sobraba algo a fin de mes. Y me lo llevé a la primera cita con el jefe de otro departamento — jefe de OTRO departamento, que en una empresa grande es como decir inocente hasta que se demuestre lo contrario.",
-                "Llegué con el pochette en la mano y las uñas recién hechas. La cena fue de esos raros ratos donde todo sale natural. Aún llevo el bolso a cada primera cita, mía o de mis amigas. Es el bolso de los comienzos.",
-            ]),
-        ],
-        "cita": "Mi primer sueldo se convirtió en un bolso que cabe en una mano y en una decisión que no cabe en ninguna.",
-    },
-    "dia-004": {
-        "resumen": "De Alicante a Madrid. 672 kilómetros, un coche prestado y esta bandolera colgada del hombro mientras el sol se ponía.",
-        "secciones": [
-            ("El bolso", [
-                "Bandolera de cuero auténtico, de esas que no llevan logo porque el cuero ya lo dice todo. Es del tipo de bolso que mejora con el uso: cada arruga es un kilómetro.",
-                "Es plana por fuera y profunda por dentro. Cabe la documentación, el móvil, un cargador y — aquel día — un pañuelo de mi madre que metí sin saber por qué.",
-            ]),
-            ("Mi historia", [
-                "Dejé a mi novio de seis años un martes. No fue una escena de película: fueron cajas, un coche prestado y la A-3 con el sol entrando por el parabrisas. La bandolera iba colgada del asiento, al alcance de la mano.",
-                "Llegué a Madrid de noche, con el bolso al hombro y las llaves de un piso que todavía olía a pintura. Todo lo que soy ahora empezó en ese viaje. El bolso fue lo único que llevaba conmigo de verdad.",
-            ]),
-        ],
-        "cita": "672 kilómetros caben en una bandolera si lo que llevas dentro es una decisión.",
-    },
-    "dia-005": {
-        "resumen": "Fue el 23 de diciembre. En casa de mis padres las navidades ya habían empezado — risas, vino — y yo estaba en mi habitación con un vaso de vino y la tele apagada. Me arreglé igual. Fui igual. Volví distinta.",
-        "secciones": [
-            ("El bolso", [
-                "Una clutch de gala con cadena removible. No de esas de boda barata que se descuadran al primer brindis: una de verdad, rígida, con acabado mate y un broche que hace clic con autoridad.",
-                "Cabe el móvil, el labial y una moneda para el ropero de la sala. Nada más. Y está bien: en una gala, lo que pesa de verdad no se lleva en el bolso.",
-            ]),
-            ("Mi historia", [
-                "Aquella Navidad me quedé sin acompañante de última hora. En casa de mis padres ya se oían las risas de siempre, y yo estaba arriba, con un vestido colgado de la puerta y dos opciones: me quedaba a ver la tele o iba sola a la gala a la que llevaba meses esperando ir.",
-                "Me arreglé despacio, sin prisa y sin testigos. Cogí la clutch, el abrigo y el coche. Bailé sola, hablé con desconocidos y volví de madrugada. Nadie me acompañó ni al entrar ni al salir. Y sin embargo es una de las noches de las que más orgullosa estoy.",
-            ]),
-        ],
-        "cita": "Hay noches que empiezan con un vaso de vino y la tele apagada y acaben cambiándote la manera de mirarte.",
-    },
-    "dia-006": {
-        "resumen": "Estaba en el fondo del armario de casa, envuelto en un pañuelo. Saddle, cuero curtido, herrajes que ya no se hacen así. Lo llevé a tasar y me dijeron que no lo vendiera nunca.",
-        "secciones": [
-            ("El bolso", [
-                "Una saddle vintage: esa silueta de silla de montar que nunca pasa de moda porque nunca estuvo de moda, estuvo siempre. Cuero curtido, costura a mano, herrajes de latón que pesan.",
-                "El tasador la levantó, olfateó el cuero — se oler el cuero bueno, es literal — y me dijo: «Esto no se vende, esto se hereda de nuevo». Le hice caso. La limpié con crema neutra y le cambié nada más.",
-            ]),
-            ("Mi historia", [
-                "Era de mi madre. Lo llevaba los domingos cuando yo era pequeña y le pedía que me dejara guardarme el billete del tranvía. Cuando la dejé a ella — a su versión de los domingos, a la edad que no perdona — tuve que vaciar su armario. Este bolso estaba en el fondo, envuelto en un pañuelo, como quien guarda una carta.",
-                "Hoy lo llevo los domingos. Le tengo prohibido a mi media hermana venderlo cuando me toque a mí irse primero. Las cosas buenas no se venden: se pasan.",
-            ]),
-        ],
-        "cita": "Un bolso heredado no lleva tus cosas. Lleva las de todos los que lo llevaron antes.",
-    },
-    "dia-007": {
-        "resumen": "Billete de ida y vuelta, portátil, un cuaderno con la primera página en blanco y este tote que aguanta todo. En la fila de embarque entendí que mi carrera iba a cambiar.",
-        "secciones": [
-            ("El bolso", [
-                "Tote de viaje de cuero reforzado en las asas. La diferencia entre un tote bonito y un tote de verdad la marca el refuerzo del asa: este aguanta un portátil, un cargador, una botella de medio litro y un abrigo sin que el hombro lo pague.",
-                "Tiene una bolsa interior con cremallera donde guardo lo que no puede perderse: pasaporte, billetes, y aquel cuaderno de primera página en blanco.",
-            ]),
-            ("Mi historia", [
-                "Me pagaron una conferencia en Berlín. No era ponente: era oyente con acreditación y mucho ojo. En la fila de embarque, con el tote cargado hasta arriba, entendí algo que no supe formular hasta meses después: que iba a volver distinta.",
-                "Hablé con tres personas, conseguí un contacto que hoy es cliente y apunté en la primera página del cuaderno un plan que aún dirijo. El tote ha volado ya cuarenta veces. Las asas siguen enteras. Yo también.",
-            ]),
-        ],
-        "cita": "Hay viajes que se miden en kilómetros y otros en lo que cabe dentro del bolso al volver.",
-    },
-    "dia-008": {
-        "resumen": "Me lo pidió mi compañera de piso para la fiesta de cumpleaños de su chico. Le dije que sí sin pensarlo. Lo vi aparecer en sus fotos durante dos semanas.",
-        "secciones": [
-            ("El bolso", [
-                "Mochila de cuero moderna, del tamaño justo para un día entero fuera de casa. Tiene esa mezcla rara de ser cómoda como una mochila y verse como un bolso, que es exactamente lo que buscan ahora las mochilas.",
-                "Correas acolchadas, cierre con imán y una bolsa trasera antirrobo donde guardo la cartera en conciertos y mercadillos.",
-            ]),
-            ("Mi historia", [
-                "Mi compañera de piso me la pidió el viernes por la mañana para la fiesta de su chico. Le dije que sí sin pensarlo. El sábado apareció en sus stories, el domingo en su desayuno, el miércoles en su cena, la semana siguiente en su escapada rural.",
-                "Dos semanas tardó en devolvérmela. Cuando la recuperé, yo ya había pedido otra — no por venganza, por resignación: hay cosas que prestas sabiendo que no vuelven. Ahora la presto con un contrato verbal de 48 horas que nadie firma pero todos respetan.",
-            ]),
-        ],
-        "cita": "Hay bolsos que se compran para ti y otros que se compran, sin saberlo, para tu gente.",
-    },
-    "dia-009": {
-        "resumen": "El día que presenté la denuncia por acoso en la empresa, no supe qué hacer con las manos. Elegí un bolso que no se mantiene firme. Como yo esa mañana. Y aun así fui.",
-        "secciones": [
-            ("El bolso", [
-                "Hobo de cuero blando, desestructurado. No tiene armazón: se amolda al cuerpo y se arruga con el uso, y a mí me gusta que se arrugue, porque también lo hace la gente valiente.",
-                "Es grande sin ser torpe: entra una carpeta, el móvil, las llaves del coche y un paquete de pañuelos, que aquel día no sobraron.",
-            ]),
-            ("Mi historia", [
-                "Aquel día presenté la denuncia por acoso en la empresa. No era la primera vez que me lo pensaba; era la primera vez que lo hacía. Me desperté a las cinco, me vestí dos veces y no supe qué bolso llevar. Nada de lo que tenía en el armario parecía adecuado para eso.",
-                "Cogí el hobo, el más blando, el que no se mantiene firme. Como yo esa mañana. A la salida, las manos me temblaban dentro del bolso, y el bolso las envolvió y no las enseñó a nadie. Gané la denuncia. El bolso, desde entonces, tiene un sitio de honor en mi armario.",
-            ]),
-        ],
-        "cita": "Un bolso blando puede sostener más de lo que parece. Sostuvo mis manos el día más duro.",
-    },
-}
+POS = [("cómod", "Comodidad"), ("calidad", "Calidad"), ("bonit", "Estética"),
+       ("elegan", "Elegancia"), ("capacidad", "Capacidad"), ("cabe", "Capacidad"),
+       ("espacio", "Capacidad"), ("grande", "Capacidad"), ("calidad precio", "Relación calidad-precio"),
+       ("barat", "Precio"), ("liger", "Ligereza"), ("cuero", "Material"),
+       ("práctic", "Practicidad"), ("versátil", "Versatilidad"), ("combina", "Versatilidad")]
+NEG = [("pequeñ", "Tamaño"), ("huele", "Olor inicial"), ("olor", "Olor inicial"),
+       ("cierre", "Cierres"), ("cremallera", "Cierres"), ("zip", "Cierres"),
+       ("asa ", "Asas"), ("asas", "Asas"), ("correa", "Correa"),
+       ("hombro", "Hombro"), ("caro", "Precio"), ("cara ", "Precio"),
+       ("costura", "Acabados"), ("roto", "Durabilidad"), ("rompió", "Durabilidad"),
+       ("despega", "Acabados"), ("tarde", "Envío")]
 
-NOMBRES = {
-    "dia-001": "Tote Ejecutivo de Cuero",
-    "dia-002": "Bandolera Crossbody Nocturna",
-    "dia-003": "Pochette de Fiesta con Cadena",
-    "dia-004": "Bandolera Clásica de Cuero",
-    "dia-005": "Clutch de Gala con Cadena Removible",
-    "dia-006": "Saddle Vintage de Cuero Curtido",
-    "dia-007": "Tote de Viaje Reforzado",
-    "dia-008": "Mochila Urbana de Cuero",
-    "dia-009": "Hobo Blando Desestructurado",
-}
+def pros_contras(bolso):
+    """Cuenta menciones de atributos en las opiniones reales scrapeadas del producto."""
+    texto = " ".join(bolso.get("opiniones_amazon", [])).lower()
+    pos, neg = {}, {}
+    for kws, destino in ((POS, pos), (NEG, neg)):
+        for kw, etiqueta in kws:
+            if kw in texto:
+                destino[etiqueta] = destino.get(etiqueta, 0) + texto.count(kw)
+    pros = [e for e, _ in sorted(pos.items(), key=lambda x: -x[1])[:3]]
+    contras = [e for e, _ in sorted(neg.items(), key=lambda x: -x[1])[:3]]
+    return pros, contras
+
+def veredicto(b):
+    r = str(b.get("rating") or 0).replace(".", ",")
+    nv = b.get("n_valoraciones") or 0
+    nivel = "muy alta" if nv > 3000 else ("alta" if nv > 800 else "sólida")
+    return (f"Con una nota media de {r} sobre 5 en {nv:,} valoraciones — una base de compra "
+            f"{nivel} — no es un bolso para comprar a ciegas: es para comprar convencido.")
+
+# ---------------------------------------------------------------- storytelling
+
+GANAS = [
+    ("Hoy es de esos días en los que la decisión no se negocia.", "elegir lo que pesa menos"),
+    ("Hay lunes que empiezan antes que tú.", "llevar la jornada con correa corta"),
+    ("El calendario no pregunta si tienes ganas.", "irse con todo ordenado dentro"),
+    ("Un día cualquiera, hasta que decides que no lo es.", "la versión más práctica de ti"),
+    ("Los días largos piden aliados que no estorben.", "cargar con lo justo y bien elegido"),
+    ("Fin de semana: otras reglas, otros ritmos.", "el bolso que no pide permiso"),
+]
+
+def texto_dia(n, b):
+    d = fecha_de_dia(n)
+    h = dia_hash(n)
+    gancho, frase = GANAS[h % len(GANAS)]
+    if d.weekday() >= 5:
+        gancho, frase = GANAS[5]
+    pros, _ = pros_contras(b)
+    dato_pro = f"Lo que más repiten sus compradoras: {pros[0].lower()}." if pros else ""
+    nombre_corto = b["titulo"].split(",")[0]
+    nv = b.get("n_valoraciones", 0)
+    return {
+        "gancho": gancho,
+        "parrafo1": (f"El bolso de hoy es el {nombre_corto}. No es un capricho de escaparate: "
+                     f"es el que acompaña {frase}, con {str(b.get('rating', 0)).replace('.', ',')}★ de nota "
+                     f"media y {nv:,} valoraciones que respaldan la decisión."),
+        "parrafo2": (f"Un bolso no cambia tu día. Cambia la manera de entrar en él: con lo que "
+                     f"necesitas, sin lo que sobra y con la certeza de que otras {max(nv, 30):,} personas "
+                     f"ya hicieron la misma elección antes que tú. {dato_pro}"),
+    }
 
 # ---------------------------------------------------------------- plantillas base
 
 UBAR = """<div class="ubar">
   <div class="container">
-    <span><span class="punto">●</span> UN BOLSO NUEVO CADA DÍA</span>
+    <span><span class="punto">●</span> 365 BOLSOS · UNO POR CADA DÍA DEL AÑO</span>
     <span>/</span>
-    <span>EL DIARIO DE ESPERANZA</span>
+    <span>PRODUCTOS REALES DE AMAZON CON SU PRECIO Y SUS OPINIONES</span>
     <span>/</span>
-    <span>SELECCIÓN CON HISTORIA, PRECIO Y OPINIONES</span>
+    <span>ENCUENTRA EL DE TU CUMPLEAÑOS</span>
   </div>
 </div>"""
 
-HEADER = """<header class="site-header">
+def header(raiz):
+    return f"""<header class="site-header">
   <div class="container">
-    <a href="{raiz}" class="logo">El Bolso de <span class="accent">Esperanza</span><span class="tagline">Un bolso nuevo cada día</span></a>
+    <a href="{raiz}" class="logo">El Bolso de <span class="accent">Esperanza</span><span class="tagline">Un bolso real cada día</span></a>
     <nav>
-      <a href="{raiz}#bolsos">Los bolsos</a>
-      <a href="{raiz}blog/">El diario</a>
+      <a href="{raiz}#hoy">El bolso de hoy</a>
+      <a href="{raiz}dia/">El diario</a>
+      <a href="{raiz}buscar/">Tu cumpleaños</a>
       <a href="{raiz}opiniones/">Opiniones</a>
-      <a class="btn vino" href="{amazon}" target="_blank" rel="sponsored nofollow noopener">Compra el look ↗</a>
     </nav>
   </div>
 </header>"""
 
 FOOTER = """<footer class="site-footer">
   <div class="container">
-    <p>El Bolso de Esperanza — el diario de una mujer y sus bolsos. Hecho con ❤️ por David Antizar.</p>
-    <p class="disclosure">Como Afiliado de Amazon, obtengo ingresos por las compras adscritas que cumplen los requisitos aplicables. Los precios pueden variar.</p>
+    <p>El Bolso de Esperanza — 365 bolsos reales, uno por cada día del año.</p>
+    <p class="disclosure">Como Afiliado de Amazon, obtengo ingresos por las compras adscritas que cumplen los requisitos aplicables. Los precios pueden variar. Pros y contras calculados a partir de las opiniones reales del producto.</p>
   </div>
 </footer>"""
-
-AMAZON_HEADER = "https://www.amazon.es/s?k=bolso+cuero+mujer&tag=nti0c8-21"
 
 def head_html(titulo, desc, canonical, og_type="website"):
     return f"""<!DOCTYPE html>
@@ -247,122 +185,182 @@ def head_html(titulo, desc, canonical, og_type="website"):
 <body>
 """
 
+def css_href(nivel):
+    return ("" if nivel == 0 else "../" * nivel) + f"css/styles.css?v={VER}"
+
 def escribir(relpath, contenido):
     ruta = RAIZ / relpath
     ruta.parent.mkdir(parents=True, exist_ok=True)
-    with open(ruta, "w", encoding="utf-8", newline="\n") as f:
-        f.write(contenido)
+    ruta.write_text(contenido, encoding="utf-8", newline="\n")
     print(f"  ✓ {relpath}")
 
-def css_href(desde_raiz):
-    """devuelve la ruta css correcta según profundidad y con versión"""
-    if desde_raiz == 0:
-        return f"css/styles.css?v={VER}"
-    return f"../css/styles.css?v={VER}" * 1 if desde_raiz == 1 else f"../../css/styles.css?v={VER}"
+# ---------------------------------------------------------------- componentes
 
-# ---------------------------------------------------------------- bloques reutilizables
+def estrellas(n):
+    n = round(n or 0)
+    return "★" * n + "☆" * (5 - n)
 
-def card_bolso(b, dia=None, href_raiz=0):
-    prefijo = "" if href_raiz == 0 else "../"
-    entrada = ENTRADA_POR_BOLSO.get(b["id"])
-    dia_num = dia or (entrada["dia"] if entrada else None)
-    chip_dia = f'<span class="dia">Día {dia_num}</span>' if dia_num else ""
-    return f"""      <a class="card-bolso" href="{prefijo}bolso/{b['id']}/">
-        <div class="imagen">
-          <img src="{prefijo}{b['imagen']}" alt="{b['titulo']}" loading="lazy">
-          {chip_dia}
-          <span class="rating">{estrellas(b.get('rating', 3))}</span>
-        </div>
+def chip_dia(n):
+    d = fecha_de_dia(n)
+    return f"Día {n} · {d.day} {MESES[d.month - 1]}"
+
+def fmt(n):
+    return f"{n:,}".replace(",", ".")
+
+def card_dia(n, pref=""):
+    b, _ = bolso_del_dia(n)
+    t = b["titulo"] if len(b["titulo"]) <= 64 else b["titulo"][:64] + "…"
+    return f"""      <a class="card-dia" href="{pref}dia/{n}/">
+        <div class="imagen"><img src="{pref}{b['imagen']}" alt="{b['titulo']}" loading="lazy"></div>
         <div class="cuerpo">
-          <h3>{b['titulo']}</h3>
-          <p class="extracto">{b['resumen'][:130]}…</p>
+          <span class="dia">{chip_dia(n)}</span>
+          <h3>{t}</h3>
           <div class="pie">
-            <span class="precio">{b['precio_aprox']}</span>
-            <span class="ir">Ver el bolso →</span>
+            <span class="precio">{b['precio']}</span>
+            <span class="rating">{str(b.get('rating', 0)).replace('.', ',')}★ · {fmt(b.get('n_valoraciones') or 0)} val.</span>
           </div>
         </div>
       </a>"""
 
-def card_opinion(o, pref="../"):
-    b = BOLSO_POR_ID.get(o["bolso"], {})
-    return f"""      <article class="card-opinion">
-        <div class="estrellas">{estrellas(o['puntuacion'])}</div>
-        <h4>{o['titulo']}</h4>
-        <p class="texto">“{o['texto']}”</p>
-        <p class="autor"><b>{o['nombre']}</b> · {o['ciudad']} · {fecha_larga(o['fecha'])}</p>
-        <p class="bolso-ref">Sobre: <a href="{pref}bolso/{o['bolso']}/">{b.get('titulo', o['bolso'])}</a></p>
-      </article>"""
-
-def card_blog(e, pref=""):
-    return f"""      <a class="card-blog" href="{pref}blog/{e['slug']}/">
-        <div class="cuerpo">
-          <span class="dia">Día {e['dia']} — {fecha_larga(e['fecha'])}</span>
-          <h3>{e['titulo']}</h3>
-          <p class="extracto">{e['extracto'][:120]}…</p>
-          <span class="meta">Por {e['autor']} · {e['leido']} de lectura</span>
-          <span class="ver">Leer la historia →</span>
-        </div>
-      </a>"""
-
-def producto_bloque(b, nombre, num="01"):
+def bloque_producto(b, pref="", titulo_fijo=None):
+    pros, contras = pros_contras(b)
+    pros_html = "".join(f"<li>{p}</li>" for p in pros) or "<li>Aún sin opiniones suficientes</li>"
+    contras_html = "".join(f"<li>{c}</li>" for c in contras) or "<li>Sin quejas recurrentes</li>"
+    nv = b.get("n_valoraciones") or 0
     return f"""      <div class="producto">
-        <span class="num">{num}</span>
-        <div>
-          <h4>{nombre}</h4>
-          <div class="marca">El Bolso de Esperanza · Selección</div>
-          <p class="desc">{b['resumen']}</p>
-          <div class="precio">≈ {b['precio_aprox']}</div>
-          <div class="stars">{estrellas(b.get('rating', 3))}</div>
-          <a href="{url_afiliado(b)}" class="btn-affiliate" target="_blank" rel="sponsored nofollow noopener">Ver en Amazon ↗</a>
+        <div class="producto-img"><img src="{pref}{b['imagen']}" alt="{b['titulo']}"></div>
+        <div class="producto-info">
+          <h4>{titulo_fijo or b['titulo']}</h4>
+          <div class="marca">{b.get('marca', '')} · ASIN {b['asin']}</div>
+          <div class="fila-datos">
+            <span class="precio">{b['precio']}</span>
+            <span class="rating">{estrellas(b.get('rating'))} {str(b.get('rating', 0)).replace('.', ',')} · {fmt(nv)} valoraciones</span>
+          </div>
+          <div class="procontras">
+            <div><b>Lo que destacan las compradoras</b><ul>{pros_html}</ul></div>
+            <div><b>Lo que critican</b><ul>{contras_html}</ul></div>
+          </div>
+          <p class="veredicto">{veredicto(b)}</p>
+          <a href="{b['afiliado']}" class="btn-affiliate" target="_blank" rel="sponsored nofollow noopener">Ver precio en Amazon ↗</a>
         </div>
       </div>"""
+
+def bloque_opiniones(b):
+    ops = b.get("opiniones_amazon", [])
+    if not ops:
+        return ""
+    items = "\n".join(f'      <blockquote class="opinion-amazon">“{o[:300]}”</blockquote>' for o in ops[:3])
+    return f"""  <section class="sec clara">
+    <div class="container">
+      <div class="watermark" aria-hidden="true">Voces</div>
+      <div class="sec-inner">
+        <span class="sec-label">Opiniones reales en Amazon</span>
+        <h2>Lo que escriben <em>quienes lo compraron</em></h2>
+{items}
+        <p style="margin-top:18px"><a class="btn negro" href="{b['afiliado']}" target="_blank" rel="sponsored nofollow noopener">Leer todas las opiniones ↗</a></p>
+      </div>
+    </div>
+  </section>"""
 
 # ---------------------------------------------------------------- páginas
 
 def generar_home():
-    cards = "\n".join(card_bolso(b, href_raiz=0) for b in BOLSOS)
-    ultimas = "\n".join(card_blog(e) for e in BLOG[:6])
-    ops = "\n".join(card_opinion(o, pref="") for o in OPINIONES[:6])
+    hoy_n = (date.today() - date(ANIO, 1, 1)).days + 1
+    b_hoy, _ = bolso_del_dia(hoy_n)
+    b2, _ = bolso_del_dia(hoy_n + 1)
+    b3, _ = bolso_del_dia(hoy_n + 2)
+    ultimos = "\n".join(card_dia(n) for n in range(hoy_n - 1, max(0, hoy_n - 7), -1))
+    proximos = "\n".join(
+        f"""        <div class="mini-proximo">
+          <img src="{b['imagen']}" alt="{b['titulo']}" loading="lazy">
+          <div><span class="mini-dia">{chip_dia(hoy_n + i + 1)}</span><p>{b['titulo'][:48]}…</p></div>
+        </div>"""
+        for i, b in enumerate((b2, b3)))
+    pros_hoy, contras_hoy = pros_contras(b_hoy)
+    d_hoy = fecha_de_dia(hoy_n)
+    nombre_hoy = b_hoy["titulo"].split(",")[0]
 
     html = head_html(
-        "El Bolso de Esperanza — Un bolso nuevo cada día",
-        "El diario de Esperanza: cada día un bolso y la historia de lo que me pasó llevándolo. Selección verificada con precio, opiniones y enlaces.",
+        "El Bolso de Esperanza — Un bolso real cada día del año",
+        f"365 bolsos reales de Amazon, uno por cada día del año. Hoy toca el de {d_hoy.day} de {MESES[d_hoy.month-1]}: {nombre_hoy}. Encuentra el de tu cumpleaños.",
         f"{DOMINIO}/",
     )
-    css = css_href(0)
-    html = html.replace("{css}", css)
-    header = HEADER.format(raiz="", amazon=AMAZON_HEADER)
+    html = html.replace("{css}", css_href(0))
     html += f"""{UBAR}
-{header}
+{header("")}
 <main>
 
-  <!-- HERO -->
-  <section class="hero" id="inicio">
+  <!-- HERO: EL BOLSO DE HOY -->
+  <section class="hero" id="hoy">
     <span class="silueta s1">👜</span>
-    <span class="silueta s2">👛</span>
     <div class="container">
-      <span class="chip">Un bolso nuevo cada día</span>
-      <h1><span class="l1">Mi vida está</span><span class="l2">en mis bolsos</span></h1>
-      <p class="hero-lead">Soy Esperanza. Llevo un bolso diferente cada día desde que empaqué mi vida en una maleta y me fui a Madrid. No es un reto de Instagram: es un diario real donde cada bolso cuenta lo que me pasó ese día.</p>
-      <span class="manuscrita">Porque un bolso no es un accesorio — es la memoria de lo que viviste.</span>
-      <div class="hero-ctas">
-        <a class="btn vino" href="#bolsos">Ver los bolsos ↓</a>
-        <a class="btn marfil" href="blog/">Leer el diario</a>
+      <div class="hero-grid">
+        <div class="hero-txt">
+          <span class="chip">El bolso del {d_hoy.day} de {MESES[d_hoy.month-1]} · día {hoy_n} del año</span>
+          <h1><span class="l1">Cada día del año,</span><span class="l2">un bolso con una decisión detrás</span></h1>
+          <p class="hero-lead">365 bolsos reales de Amazon —con precio, nota y opiniones verificadas— repartidos por los días del año en bucle. Sin inventos: el bolso que ves es el bolso que se vende.</p>
+          <div class="hero-ctas">
+            <a class="btn vino" href="#hoy-bolso">Ver el bolso de hoy ↓</a>
+            <a class="btn marfil" href="buscar/">¿Qué bolso te tocó nacer? →</a>
+          </div>
+        </div>
+        <div class="hero-bolso" id="hoy-bolso">
+          <span class="etiqueta">Bolso del día {hoy_n}</span>
+          <img src="{b_hoy['imagen']}" alt="{b_hoy['titulo']}">
+          <div class="hero-bolso-info">
+            <h3>{nombre_hoy}</h3>
+            <div class="fila-datos">
+              <span class="precio">{b_hoy['precio']}</span>
+              <span class="rating">{estrellas(b_hoy.get('rating'))} {fmt(b_hoy.get('n_valoraciones') or 0)} val.</span>
+            </div>
+            <div class="procontras mini">
+              <div><b>Pros</b><ul>{''.join(f'<li>{p}</li>' for p in pros_hoy) or '<li>—</li>'}</ul></div>
+              <div><b>Contras</b><ul>{''.join(f'<li>{c}</li>' for c in contras_hoy) or '<li>—</li>'}</ul></div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <a class="btn vino" href="bolso/{b_hoy['id']}/">Ficha completa →</a>
+              <a class="btn-affiliate" href="{b_hoy['afiliado']}" target="_blank" rel="sponsored nofollow noopener">Amazon ↗</a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- BOLSOS -->
-  <section class="sec clara" id="bolsos">
+  <!-- BUSCADOR DE CUMPLEAÑOS -->
+  <section class="sec clara" id="buscar">
     <div class="container">
-      <div class="watermark" aria-hidden="true">Bolsos</div>
+      <div class="watermark" aria-hidden="true">365</div>
       <div class="sec-inner">
-        <span class="sec-label">01 / La colección</span>
-        <h2>Nueve bolsos, <em>nueve historias</em></h2>
-        <p class="lead">Cada bolso de este diario tiene su ficha: la historia del día que lo llevé, el precio aproximado, mi nota y las opiniones de las lectoras que se lo compraron.</p>
-        <div class="grid-bolsos">
-{cards}
+        <span class="sec-label">El buscador del año</span>
+        <h2>¿Qué bolso te tocó <em>el día que naciste?</em></h2>
+        <p class="lead">Elige tu fecha — o la de quien quieras regalar — y te decimos qué bolso lleva ese día, cuánto cuesta de verdad y qué dicen sus compradoras.</p>
+        <div id="finder">
+          <label for="finder-fecha">Tu fecha</label>
+          <div class="finder-row">
+            <input type="date" id="finder-fecha" min="{ANIO}-01-01" max="{ANIO}-12-31">
+            <button class="btn vino" id="finder-btn">Buscar mi bolso</button>
+            <button class="btn marfil" id="finder-random">Sorpréndeme</button>
+          </div>
+          <div id="finder-resultado" class="finder-resultado"></div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROXIMOS + ULTIMOS -->
+  <section class="sec oscura">
+    <div class="container">
+      <div class="watermark" aria-hidden="true">Diario</div>
+      <div class="sec-inner">
+        <span class="sec-label">Los próximos días</span>
+        <h2>Lo que viene <em>después de hoy</em></h2>
+        <div class="proximos">{proximos}</div>
+        <span class="sec-label" style="margin-top:46px">Los últimos días publicados</span>
+        <div class="grid-dias">
+{ultimos}
+        </div>
+        <p style="margin-top:30px"><a class="btn vino" href="dia/">Ver el diario completo →</a></p>
       </div>
     </div>
   </section>
@@ -370,40 +368,8 @@ def generar_home():
   <!-- DESTACADO -->
   <section class="destacado">
     <div class="container">
-      <p class="frase">“Los bolsos no son caros. Las historias que llevan dentro, sí.”</p>
-      <span class="firma">— Esperanza</span>
-    </div>
-  </section>
-
-  <!-- DIARIO -->
-  <section class="sec oscura" id="diario">
-    <div class="container">
-      <div class="watermark" aria-hidden="true">Diario</div>
-      <div class="sec-inner">
-        <span class="sec-label">02 / El diario</span>
-        <h2>Lo que me pasó <em>con cada bolso</em></h2>
-        <p class="lead">Una entrada por bolso. Con fecha, con historia y con la verdad entera — que para eso es un diario.</p>
-        <div class="grid-blog">
-{ultimas}
-        </div>
-        <p style="margin-top:30px"><a class="btn vino" href="blog/">Ver el diario completo →</a></p>
-      </div>
-    </div>
-  </section>
-
-  <!-- OPINIONES -->
-  <section class="sec clara" id="opiniones">
-    <div class="container">
-      <div class="watermark" aria-hidden="true">Voces</div>
-      <div class="sec-inner">
-        <span class="sec-label">03 / Opiniones</span>
-        <h2>Lo que dicen <em>las que se lo compraron</em></h2>
-        <p class="lead">Opiniones reales de lectoras del diario sobre los bolsos de la colección. Sin filtros y con nota.</p>
-        <div class="grid-opiniones">
-{ops}
-        </div>
-        <p style="margin-top:30px"><a class="btn negro" href="opiniones/">Todas las opiniones →</a></p>
-      </div>
+      <p class="frase">“Un año tiene 365 días. En cada uno cabe una decisión, y detrás de cada decisión, un bolso.”</p>
+      <span class="firma">— El diario de Esperanza</span>
     </div>
   </section>
 
@@ -411,39 +377,55 @@ def generar_home():
   <section class="sec cta-final">
     <div class="container">
       <div class="sec-inner">
-        <h2>¿Cuál es <em>tu bolso</em> de este año?</h2>
-        <p class="lead" style="color:#F2DFE0">Empieza por el que se parezca a la historia que quieres vivir. Los demás llegan solos.</p>
-        <p style="margin-top:26px"><a class="btn" href="{AMAZON_HEADER}" target="_blank" rel="sponsored nofollow noopener">Ver bolsos en Amazon ↗</a></p>
+        <h2>Nada de fotos que no son <em>el producto real</em></h2>
+        <p class="lead" style="color:#F2DFE0">Cada bolso de este diario se toma directamente de su ficha de Amazon: su foto, su precio, su nota y las opiniones de quienes lo compraron. Lo que ves es lo que llega.</p>
+        <p style="margin-top:26px"><a class="btn" href="buscar/">Encuentra el tuyo →</a></p>
       </div>
     </div>
   </section>
 
 </main>
+<script src="js/finder-data.js?v={VER}"></script>
+<script src="js/finder.js?v={VER}"></script>
 {FOOTER}
 </body>
 </html>"""
     escribir("index.html", html)
 
+def generar_finder_datos():
+    dias = []
+    for n in range(1, 366):  # 365 entradas: un bolso por día, en bucle sobre el pool real
+        b, _ = bolso_del_dia(n)
+        dias.append({
+            "n": n, "fecha": fecha_de_dia(n).isoformat(), "id": b["id"],
+            "titulo": b["titulo"].split(",")[0], "precio": b["precio"],
+            "rating": b.get("rating"), "n_val": b.get("n_valoraciones", 0),
+            "imagen": b["imagen"],
+        })
+    # inline en JS (sin fetch): funciona en http(s) y en file:// sin CORS
+    escribir("js/finder-data.js",
+             "window.FINDER_DATA = " + json.dumps({"anio": ANIO, "dias": dias}, ensure_ascii=False) + ";\n")
+
 def generar_blog_index():
-    cards = "\n".join(card_blog(e) for e in BLOG)
+    hoy_n = (date.today() - date(ANIO, 1, 1)).days + 1
+    cards = "\n".join(card_dia(n, pref="../") for n in range(365, 0, -1))
     html = head_html(
-        "El Diario — El Bolso de Esperanza",
-        "Todas las entradas del diario de Esperanza: una historia por bolso, con fecha y sin filtros.",
-        f"{DOMINIO}/blog/",
+        "El Diario — 365 días, 365 bolsos — El Bolso de Esperanza",
+        "El diario completo: cada día del año con su bolso real, su precio y sus opiniones.",
+        f"{DOMINIO}/dia/",
     )
     html = html.replace("{css}", css_href(1))
-    header = HEADER.format(raiz="../", amazon=AMAZON_HEADER)
     html += f"""{UBAR}
-{header}
+{header("../")}
 <main>
   <section class="sec clara" style="padding-top:60px">
     <div class="container">
       <div class="watermark" aria-hidden="true">Diario</div>
       <div class="sec-inner">
         <span class="sec-label">El diario</span>
-        <h1 class="sec h2" style="font-family:var(--serif);font-weight:700;font-size:clamp(32px,5vw,56px);line-height:1.05">Lo que me pasó <em style="color:var(--vino);font-style:italic">con cada bolso</em></h1>
-        <p class="lead" style="color:#57504C">{len(BLOG)} entradas. Un bolso, una fecha y una historia por cada día del diario.</p>
-        <div class="grid-blog">
+        <h1 style="font-family:var(--serif);font-weight:700;font-size:clamp(32px,5vw,56px);line-height:1.05">El año entero, <em style="color:var(--vino);font-style:italic">de más nuevo a más viejo</em></h1>
+        <p class="lead" style="color:#57504C">Repositorio actual: {N} bolsos reales. Los días avanzan en bucle hasta cubrir los 365.</p>
+        <div class="grid-dias">
 {cards}
         </div>
       </div>
@@ -453,175 +435,153 @@ def generar_blog_index():
 {FOOTER}
 </body>
 </html>"""
-    escribir("blog/index.html", html)
+    escribir("dia/index.html", html)
 
-def cuerpo_post(slug):
-    p = POSTS[slug]
-    secciones = []
-    for h2, parrafos in p["secciones"]:
-        ps = "\n".join(f"          <p>{x}</p>" for x in parrafos)
-        secciones.append(f'          <h2>{h2}</h2>\n{ps}')
-    cuerpo = "\n".join(secciones)
-    cita = f'\n          <p class="cita">{p["cita"]}</p>'
-    return cuerpo + cita
+def generar_dia(n):
+    b, alternos = bolso_del_dia(n)
+    d = fecha_de_dia(n)
+    t = texto_dia(n, b)
+    semana = DIAS_SEMANA[d.weekday()].capitalize()
+    es_repeticion = n > N
+    nota_repeticion = ""
+    if es_repeticion:
+        nota_repeticion = (f'<p class="nota-bucle">El repositorio de bolsos aún está creciendo hacia los 365: '
+                           f'el día {n} comparte bolso con el día {(n - 1) % N + 1}, pero cada paso por el '
+                           f'calendario le da un enfoque nuevo. Cuando el repositorio se complete, cada día '
+                           f'tendrá su propio bolso definitivo.</p>')
 
-def generar_post(e, idx_total):
-    slug = e["slug"]
-    b = BOLSO_POR_SLUG[e["bolso"]]
-    p = POSTS[slug]
-    prev_e = BLOG[idx_total - 1] if idx_total > 0 else None
-    next_e = BLOG[idx_total + 1] if idx_total < len(BLOG) - 1 else None
-    ops = "\n".join(card_opinion(o, pref="../../") for o in opiniones_de(b["id"]))
-    ops_bloque = ""
-    if ops:
-        ops_bloque = f"""
-  <!-- OPINIONES DEL BOLSO -->
+    alternos_html = ""
+    if alternos:
+        cards = "\n".join(
+            f"""        <div class="mini-proximo">
+          <img src="../..{a['imagen'][len('assets')-6:] if False else '/' + a['imagen']}" alt="{a['titulo']}" loading="lazy">
+          <div><span class="mini-dia">También encaja</span><p>{a['titulo'][:44]}…</p></div>
+        </div>""" for a in alternos[:3])
+        alternos_html = f"""
   <section class="sec clara">
     <div class="container">
-      <div class="watermark" aria-hidden="true">Voces</div>
       <div class="sec-inner">
-        <span class="sec-label">Opiniones</span>
-        <h2>Lo que dicen las que <em>se lo compraron</em></h2>
-        <div class="grid-opiniones">
-{ops}
-        </div>
+        <span class="sec-label">Alternativas del día</span>
+        <h2>Otros bolsos que <em>también valen para este día</em></h2>
+        <div class="proximos">{cards}</div>
       </div>
     </div>
   </section>"""
-    nav_prev = f'<a href="../{prev_e["slug"]}/" style="font-family:var(--hand);font-size:19px;color:var(--vino-txt);text-decoration:none">← Día {prev_e["dia"]}</a>' if prev_e else "<span></span>"
-    nav_next = f'<a href="../{next_e["slug"]}/" style="font-family:var(--hand);font-size:19px;color:var(--vino-txt);text-decoration:none">Día {next_e["dia"]} →</a>' if next_e else "<span></span>"
 
+    prev_, next_ = (n - 1) if n > 1 else 365, (n + 1) if n < 365 else 1
     jsonld = json.dumps({
-        "@context": "https://schema.org",
-        "@type": "BlogPosting",
-        "headline": e["titulo"],
-        "description": e["resumen"],
-        "datePublished": e["fecha"],
-        "author": {"@type": "Person", "name": "Esperanza"},
-        "publisher": {"@type": "Organization", "name": "El Bolso de Esperanza"},
-        "url": f"{DOMINIO}/blog/{slug}/",
+        "@context": "https://schema.org", "@type": "BlogPosting",
+        "headline": f"Bolso del día {n} de {ANIO} ({d.day} de {MESES[d.month-1]}): {b['titulo'].split(',')[0]}",
+        "datePublished": d.isoformat(),
+        "author": {"@type": "Organization", "name": "El Bolso de Esperanza"},
+        "url": f"{DOMINIO}/dia/{n}/",
     }, ensure_ascii=False, indent=2)
 
     html = head_html(
-        f"{e['titulo']} — El Bolso de Esperanza",
-        e["resumen"],
-        f"{DOMINIO}/blog/{slug}/",
-        og_type="article",
+        f"Día {n} · {semana} {d.day} de {MESES[d.month-1]} — {b['titulo'].split(',')[0]} — El Bolso de Esperanza",
+        f"El bolso real del día {n} de {ANIO}: {b['titulo'][:100]}. Precio {b['precio']}, {b.get('rating')}★ y pros y contras de sus compradoras.",
+        f"{DOMINIO}/dia/{n}/", og_type="article",
     )
     html = html.replace("{css}", css_href(2))
-    header = HEADER.format(raiz="../../", amazon=AMAZON_HEADER)
     html += f"""{UBAR}
-{header}
+{header("../../")}
 <script type="application/ld+json">
 {jsonld}
 </script>
 <main>
   <section class="sec oscura" style="padding-bottom:40px">
     <div class="container">
-      <div class="watermark" aria-hidden="true">Día {e['dia']:02d}</div>
+      <div class="watermark" aria-hidden="true">{n}</div>
       <div class="sec-inner">
-        <a class="volver" href="../../blog/">← El diario</a>
+        <a class="volver" href="../../dia/">← El diario</a>
         <article class="entrada-blog">
-          <span class="meta-blog" style="color:var(--tan)">Día {e['dia']} · {fecha_larga(e['fecha'])} · Por {e['autor']} · {e['leido']} de lectura</span>
-          <h1>{e['titulo']}</h1>
-          <p class="resumen" style="color:#CFC2BE;font-style:italic">{p['resumen']}</p>
+          <span class="meta-blog" style="color:var(--tan)">{semana}, {fecha_larga(d)} · día {n} de 365</span>
+          <h1>{b['titulo'].split(',')[0]}: <em>el bolso del día {n}</em></h1>
+          <p class="resumen" style="color:#CFC2BE;font-style:italic">{t['gancho']} {t['parrafo1']}</p>
           <figure style="margin:28px 0 6px">
-            <img src="../../{b['imagen']}" alt="{b['titulo']}" style="border:2px solid var(--marfil);width:100%;max-height:440px;object-fit:cover">
-            <figcaption style="font-size:12px;color:var(--gris);margin-top:8px;letter-spacing:1px;text-transform:uppercase">El bolso del día {e['dia']} — ≈ {b['precio_aprox']}</figcaption>
+            <img src="../../{b['imagen']}" alt="{b['titulo']}" style="border:2px solid var(--marfil);width:100%;max-height:460px;object-fit:cover">
+            <figcaption style="font-size:12px;color:var(--gris);margin-top:8px;letter-spacing:1px;text-transform:uppercase">Imagen oficial del producto en Amazon — no es un render</figcaption>
           </figure>
           <div class="cuerpo-blog">
-{cuerpo_post(slug)}
+            <p>{t['parrafo2']}</p>
+            {nota_repeticion}
           </div>
         </article>
       </div>
     </div>
   </section>
 
-  <!-- PRODUCTO -->
   <section class="ficha">
     <div class="container">
-      <span class="sec-label" style="color:var(--vino)">El bolso de esta historia</span>
-{producto_bloque(b, NOMBRES[slug])}
+      <span class="sec-label" style="color:var(--vino)">El bolso de hoy, con datos reales</span>
+{bloque_producto(b, pref="../../")}
       <div style="display:flex;justify-content:space-between;margin-top:30px;flex-wrap:wrap;gap:10px">
-        {nav_prev}
+        <a href="../{prev_}/" style="font-family:var(--hand);font-size:19px;color:var(--vino-txt);text-decoration:none">← Día {prev_}</a>
         <a href="../../bolso/{b['id']}/" style="font-family:var(--hand);font-size:19px;color:var(--vino-txt);text-decoration:none">Ficha del bolso</a>
-        {nav_next}
+        <a href="../{next_}/" style="font-family:var(--hand);font-size:19px;color:var(--vino-txt);text-decoration:none">Día {next_} →</a>
       </div>
     </div>
-  </section>{ops_bloque}
+  </section>
+{bloque_opiniones(b)}
+{alternos_html}
 </main>
 {FOOTER}
 </body>
 </html>"""
-    escribir(f"blog/{slug}/index.html", html)
+    escribir(f"dia/{n}/index.html", html)
 
 def generar_ficha_bolso(b):
-    e = ENTRADA_POR_BOLSO.get(b["id"])
-    ops = "\n".join(card_opinion(o, pref="../../") for o in opiniones_de(b["id"]))
-    ops_bloque = ""
-    if ops:
-        ops_bloque = f"""
-      <div class="grid-opiniones">
-{ops}
-      </div>"""
-    enlace_diario = f'        <p style="margin-top:26px"><a class="btn vino" href="../../blog/{e["slug"]}/">Leer la historia en el diario →</a></p>' if e else ""
+    dias_del_bolso = [n for n in range(1, 366) if bolso_del_dia(n)[0]["id"] == b["id"]]
+    dias_txt = ", ".join(str(x) for x in dias_del_bolso[:12]) or "—"
+    ops = b.get("opiniones_amazon", [])
+    ops_html = "\n".join(f'      <blockquote class="opinion-amazon">“{o[:300]}”</blockquote>' for o in ops[:4])
 
     jsonld = json.dumps({
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": b["titulo"],
-        "description": b["resumen"],
+        "@context": "https://schema.org", "@type": "Product",
+        "name": b["titulo"].split(",")[0],
+        "description": b["titulo"],
         "image": f"{DOMINIO}/{b['imagen']}",
-        "offers": {
-            "@type": "Offer",
-            "priceCurrency": "EUR",
-            "price": b["precio_aprox"].replace("€", "").strip(),
-            "url": url_afiliado(b),
-            "availability": "https://schema.org/InStock",
-        },
+        "aggregateRating": {"@type": "AggregateRating",
+                            "ratingValue": b.get("rating", 0),
+                            "reviewCount": b.get("n_valoraciones", 0)},
+        "offers": {"@type": "Offer", "priceCurrency": "EUR",
+                   "price": str(b.get("precio_num", "")).replace(".", ","),
+                   "url": b["afiliado"], "availability": "https://schema.org/InStock"},
     }, ensure_ascii=False, indent=2)
 
     html = head_html(
-        f"{b['titulo']} — Ficha y opiniones — El Bolso de Esperanza",
-        f"{b['resumen']} Precio aproximado {b['precio_aprox']}, nota {b.get('rating', 3)}/5 y opiniones de lectoras.",
-        f"{DOMINIO}/bolso/{b['id']}/",
-        og_type="product",
+        f"{b['titulo'].split(',')[0]} — precio real, pros y contras — El Bolso de Esperanza",
+        f"{b['titulo'][:120]}. Precio real {b['precio']}, {b.get('rating')}★ con {b.get('n_valoraciones')} valoraciones. Pros y contras calculados de opiniones reales.",
+        f"{DOMINIO}/bolso/{b['id']}/", og_type="product",
     )
     html = html.replace("{css}", css_href(2))
-    header = HEADER.format(raiz="../../", amazon=AMAZON_HEADER)
     html += f"""{UBAR}
-{header}
+{header("../../")}
 <script type="application/ld+json">
 {jsonld}
 </script>
 <main>
   <section class="ficha" style="padding-top:48px">
     <div class="container">
-      <a class="volver" href="../../">← Los bolsos</a>
+      <a class="volver" href="../../">← Portada</a>
       <article>
-        <span class="sec-label" style="color:var(--vino);margin-top:18px">Ficha del bolso</span>
-        <h1>{b['titulo']}</h1>
-        <p class="resumen" style="font-style:italic">{b['resumen']}</p>
-        <figure style="margin:30px 0 10px">
-          <img src="../../{b['imagen']}" alt="{b['titulo']}" style="border:2px solid var(--tinta);box-shadow:10px 10px 0 var(--marfil2);width:100%;max-height:480px;object-fit:cover">
-        </figure>
-        <div style="display:flex;gap:26px;flex-wrap:wrap;margin-top:26px;align-items:center">
-          <span style="font-family:var(--serif);font-weight:900;font-size:34px">{b['precio_aprox']}</span>
-          <span style="color:var(--oro);font-size:18px;letter-spacing:2px">{estrellas(b.get('rating', 3))}</span>
-          <a class="btn-affiliate" href="{url_afiliado(b)}" target="_blank" rel="sponsored nofollow noopener">Ver en Amazon ↗</a>
-        </div>
-{enlace_diario}
+        <span class="sec-label" style="color:var(--vino);margin-top:18px">Ficha del bolso · datos scrapeados de Amazon</span>
+        <h1>{b['titulo'].split(',')[0]}</h1>
+        <p class="resumen" style="font-style:italic">{b['titulo']}</p>
+{bloque_producto(b, pref="../../", titulo_fijo=b['titulo'])}
+        <p style="font-size:13px;color:var(--gris);margin-top:14px">Aparece en el diario los días: {dias_txt}. Nota media {str(b.get('rating')).replace('.', ',')}★ sobre {fmt(b.get('n_valoraciones') or 0)} valoraciones reales.</p>
       </article>
     </div>
   </section>
 
-  <section class="sec clara">
+  <section class="sec oscura">
     <div class="container">
       <div class="watermark" aria-hidden="true">Voces</div>
       <div class="sec-inner">
-        <span class="sec-label">Opiniones verificadas</span>
-        <h2>Lo que dicen <em>las que lo llevaron</em></h2>
-{ops_bloque}
+        <span class="sec-label">Opiniones reales de compradoras</span>
+        <h2>Directo de la ficha <em>de Amazon</em></h2>
+{ops_html or '<p style="color:var(--rosa)">Aún sin opiniones scrapeadas para este producto — el cron las traerá.</p>'}
+        <p style="margin-top:18px"><a class="btn vino" href="{b['afiliado']}" target="_blank" rel="sponsored nofollow noopener">Ver la ficha completa en Amazon ↗</a></p>
       </div>
     </div>
   </section>
@@ -632,40 +592,34 @@ def generar_ficha_bolso(b):
     escribir(f"bolso/{b['id']}/index.html", html)
 
 def generar_opiniones_index():
+    con_ops = [b for b in BOLSOS if b.get("opiniones_amazon")]
     bloques = []
-    for b in BOLSOS:
-        ops = opiniones_de(b["id"])
-        if not ops:
-            continue
-        cards = "\n".join(card_opinion(o) for o in ops)
-        bloque = f"""    <div class="sec-inner" style="margin-top:46px">
-      <span class="sec-label">≈ {b['precio_aprox']} · {'★' * b.get('rating', 3)}</span>
-      <h2 style="font-size:clamp(24px,3.2vw,34px)">{b['titulo']}</h2>
-      <p class="lead">Ficha completa: <a href="../bolso/{b['id']}/" style="color:var(--vino-txt);font-weight:600">ver el bolso →</a></p>
-      <div class="grid-opiniones" style="margin-top:22px">
-{cards}
-      </div>
-    </div>"""
-        bloques.append(bloque)
+    for b in con_ops[:24]:
+        items = "\n".join(f'      <blockquote class="opinion-amazon">“{o[:280]}”</blockquote>' for o in b["opiniones_amazon"][:2])
+        bloques.append(f"""    <div class="sec-inner" style="margin-top:40px">
+      <span class="sec-label">{str(b.get('rating')).replace('.', ',')}★ · {fmt(b.get('n_valoraciones') or 0)} valoraciones · {b['precio']}</span>
+      <h2 style="font-size:clamp(22px,3vw,32px)">{b['titulo'].split(',')[0]}</h2>
+      <p class="lead">Ficha: <a href="../bolso/{b['id']}/" style="color:var(--vino-txt);font-weight:600">ver el bolso →</a></p>
+{items}
+    </div>""")
 
     html = head_html(
-        "Opiniones — El Bolso de Esperanza",
-        "Todas las opiniones de las lectoras sobre los bolsos del diario de Esperanza, ordenadas por bolso.",
+        "Opiniones reales — El Bolso de Esperanza",
+        "Las opiniones reales de compradoras de los bolsos del diario, scrapeadas directamente de Amazon.",
         f"{DOMINIO}/opiniones/",
     )
     html = html.replace("{css}", css_href(1))
-    header = HEADER.format(raiz="../", amazon=AMAZON_HEADER)
-    inner = "\n".join(bloques)
+    inner = "\n".join(bloques) or "<p>El cron está recolectando opiniones. Vuelve pronto.</p>"
     html += f"""{UBAR}
-{header}
+{header("../")}
 <main>
   <section class="sec clara" style="padding-top:60px">
     <div class="container">
       <div class="watermark" aria-hidden="true">Voces</div>
       <div class="sec-inner">
         <span class="sec-label">Opiniones</span>
-        <h1 style="font-family:var(--serif);font-weight:700;font-size:clamp(32px,5vw,56px);line-height:1.05">Lo que dicen <em style="color:var(--vino);font-style:italic">las que se los compraron</em></h1>
-        <p class="lead" style="color:#57504C">{len(OPINIONES)} opiniones sobre {len([b for b in BOLSOS if opiniones_de(b['id'])])} bolsos del diario. Nota honesta y experiencia real.</p>
+        <h1 style="font-family:var(--serif);font-weight:700;font-size:clamp(32px,5vw,56px)">Directo de las fichas <em style="color:var(--vino);font-style:italic">de Amazon</em></h1>
+        <p class="lead" style="color:#57504C">Nada inventado: estos textos son opiniones reales scrapeadas de las fichas de los bolsos del diario.</p>
 {inner}
       </div>
     </div>
@@ -676,31 +630,77 @@ def generar_opiniones_index():
 </html>"""
     escribir("opiniones/index.html", html)
 
-def generar_sitemap():
-    urls = ["", "blog/", "opiniones/"]
-    urls += [f"blog/{e['slug']}/" for e in BLOG]
-    urls += [f"bolso/{b['id']}/" for b in BOLSOS]
-    items = "\n".join(
-        f"  <url><loc>{DOMINIO}/{u}</loc><changefreq>weekly</changefreq></url>"
-        for u in urls
+def generar_buscar():
+    html = head_html(
+        "¿Qué bolso me tocó el día que nací? — El Bolso de Esperanza",
+        "Elige una fecha cualquiera del año y descubre qué bolso real le toca: precio, nota, pros y contras de sus compradoras.",
+        f"{DOMINIO}/buscar/",
     )
-    xml = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{items}\n</urlset>\n'
-    escribir("sitemap.xml", xml)
+    html = html.replace("{css}", css_href(1))
+    html += f"""{UBAR}
+{header("../")}
+<main>
+  <section class="sec clara" style="padding-top:60px">
+    <div class="container">
+      <div class="watermark" aria-hidden="true">365</div>
+      <div class="sec-inner">
+        <span class="sec-label">El buscador del año</span>
+        <h1 style="font-family:var(--serif);font-weight:700;font-size:clamp(32px,5vw,56px)">¿Qué bolso te tocó <em style="color:var(--vino);font-style:italic">el día que naciste?</em></h1>
+        <p class="lead" style="color:#57504C">365 días, 365 bolsos reales en bucle. Elige cualquier fecha y te decimos qué bolso lleva ese día — con su precio real, su nota y lo que dicen quienes lo compraron.</p>
+        <div id="finder">
+          <label for="finder-fecha">Elige tu fecha</label>
+          <div class="finder-row">
+            <input type="date" id="finder-fecha" min="{ANIO}-01-01" max="{ANIO}-12-31">
+            <button class="btn vino" id="finder-btn">Buscar mi bolso</button>
+            <button class="btn marfil" id="finder-random">Sorpréndeme</button>
+          </div>
+          <div id="finder-resultado" class="finder-resultado"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="sec oscura">
+    <div class="container">
+      <div class="sec-inner">
+        <span class="sec-label">Cómo funciona</span>
+        <h2>Un bolso por día, <em>en bucle infinito</em></h2>
+        <p class="lead">El repositorio de bolsos se ordena por calidad (nota media y número de valoraciones reales) y se reparte por los 365 días del año. Cuando el repositorio crece, cada día recibe un bolso nuevo; mientras tanto, los días repetidos llevan alternativas y un enfoque distinto cada vez que pasan por el calendario.</p>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="../js/finder-data.js?v={VER}"></script>
+<script src="../js/finder.js?v={VER}"></script>
+{FOOTER}
+</body>
+</html>"""
+    escribir("buscar/index.html", html)
 
-# ---------------------------------------------------------------- main
+def generar_sitemap():
+    urls = ["", "dia/", "buscar/", "opiniones/"]
+    urls += [f"dia/{n}/" for n in range(1, 366)]
+    urls += [f"bolso/{b['id']}/" for b in BOLSOS]
+    items = "\n".join(f"  <url><loc>{DOMINIO}/{u}</loc><changefreq>weekly</changefreq></url>" for u in urls)
+    escribir("sitemap.xml", f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{items}\n</urlset>\n')
 
 def main():
-    print("Generando El Bolso de Esperanza — sistema kit72h")
+    print(f"Generando El Bolso de Esperanza v4 — {N} bolsos en repositorio")
+    if N == 0:
+        print("ERROR: repositorio vacío. Corre scripts/bolso-catalogo.py primero.")
+        return
     generar_home()
-    generar_blog_index()
-    for i, e in enumerate(BLOG):
-        generar_post(e, i)
+    generar_finder_datos()
+    generar_buscar()
+    generar_opiniones_index()
+    n_dias = 365
+    for n in range(1, n_dias + 1):
+        generar_dia(n)
     for b in BOLSOS:
         generar_ficha_bolso(b)
-    generar_opiniones_index()
+    generar_blog_index()
     generar_sitemap()
-    total = 1 + 1 + len(BLOG) + len(BOLSOS) + 1
-    print(f"\nListo: {total} páginas generadas (home + índice blog + {len(BLOG)} posts + {len(BOLSOS)} fichas + opiniones) + sitemap")
+    total = 4 + n_dias + N
+    print(f"\nListo: {total} páginas (home + buscar + opiniones + índice + {n_dias} días + {N} fichas) + finder-data + sitemap")
 
 if __name__ == "__main__":
     main()
