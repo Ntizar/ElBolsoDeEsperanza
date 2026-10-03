@@ -1,4 +1,4 @@
-/* finder.js v4 — buscador "¿qué bolso te tocó el día que naciste?" */
+/* finder.js v6 — buscador "¿qué bolso te tocó el día que naciste?" (anatomía de galería) */
 (function () {
   "use strict";
 
@@ -25,30 +25,23 @@
 
   function nombre_fecha(fechaISO) {
     var p = fechaISO.split("-");
-    var meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-    return Number(p[2]) + " de " + meses[Number(p[1]) - 1];
+    var mes = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+    return Number(p[2]) + " de " + mes[Number(p[1]) - 1];
   }
 
   function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
 
-  function html_card(dia) {
+  function html_card(via) {
     var rutaBase = location.pathname.indexOf("/buscar/") >= 0 ? "../" : "";
     return "" +
       '<div class="finder-card">' +
-      '  <img src="' + rutaBase + dia.imagen + '" alt="' + dia.titulo + '">' +
+      '  <div class="fc-foto"><img src="' + rutaBase + via.imagen + '" alt="' + via.titulo + '"></div>' +
       '  <div class="fc-info">' +
-      '    <span class="fc-fecha">' + nombre_fecha(dia.fecha) + " · día " + dia.n + " del año</span>" +
-      '    <h3>' + dia.titulo + "</h3>" +
-      '    <div class="tipo-fila">' +
-      '      <span class="tipo">' + (dia.tipo || "Bolso") + "</span>" +
-      '      <span class="rareza">' + (dia.rsimb || "●") + " <b>" + (dia.rareza || "Común") + "</b></span>" +
-      '    </div>' +
-      '    <div class="fc-datos">' +
-      "      <span>Precio <b>" + dia.precio + " €</b></span>" +
-      "      <span>Nota <b>" + String(dia.rating).replace(".", ",") + "★</b></span>" +
-      "      <span><b>" + fmt(dia.n_val) + "</b> valoraciones</span>" +
-      "    </div>" +
-      '    <a class="btn negro" href="' + rutaBase + "dia/" + dia.n + '/">Ver la carta del día →</a>' +
+      '    <span class="fc-fecha">' + nombre_fecha(via.fecha) + " · carta Nº " + String(via.n).padStart(3, "0") + "</span>" +
+      '    <h3>' + via.titulo + "</h3>" +
+      '    <span class="fc-meta">' + (via.tipo || "Bolso") + " · Nota <b>" + String(via.rating).replace(".", ",") + "★</b> · " + fmt(via.n_val) + " valoraciones</span>" +
+      '    <span class="fc-precio">' + via.precio + " €</span>" +
+      '    <a class="btn negro" href="' + rutaBase + "dia/" + via.n + '/">Ver la carta del día →</a>' +
       "  </div>" +
       "</div>";
   }

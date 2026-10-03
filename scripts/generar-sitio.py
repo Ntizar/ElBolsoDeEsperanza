@@ -17,11 +17,12 @@ Idempotente. Uso: python scripts/generar-sitio.py
 """
 import json
 import hashlib
+import re
 from datetime import date, timedelta
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-VER = "20261003b"
+VER = "20261003f"
 DOMINIO = "https://ntizar.github.io/ElBolsoDeEsperanza"
 ANIO = 2026
 
@@ -168,9 +169,7 @@ def texto_dia(n, b):
 
 UBAR = """<div class="ubar">
   <div class="container">
-    <span><span class="punto">●</span> 365 CARTAS · UNA POR CADA DÍA DEL AÑO</span>
-    <span>/</span>
-    <span>PIEZAS REALES DE AMAZON CON SU PRECIO Y SUS OPINIONES</span>
+    <span><span class="punto">●</span> 365 CARTAS, UNA POR DÍA DEL AÑO</span>
     <span>/</span>
     <span>ENCUENTRA LA DE TU CUMPLEAÑOS</span>
   </div>
@@ -240,40 +239,42 @@ def chip_dia(n):
 def fmt(n):
     return f"{n:,}".replace(",", ".")
 
+def nombre_display(b):
+    """Nombre de galeria: sin SKU, sin Color:/Used/Nueva Etiqueta, max 52 caracteres."""
+    t = re.sub(r"\s*[-|,]\s*(Used|Reno|Nueva Etiqueta|Color\s*:.*|\d+\s*(l|kg).*)\s*$", "", b["titulo"], flags=re.I)
+    t = re.sub(r"\s+", " ", t).strip().rstrip(",;|-")
+    if len(t) <= 52:
+        return t
+    return t[:52].rsplit(" ", 1)[0].rstrip(".,;|-") + "…"
+
 def card_dia(n, pref=""):
     b, _ = bolso_del_dia(n)
-    t = b["titulo"] if len(b["titulo"]) <= 58 else b["titulo"][:58] + "…"
-    rcls, rnombre, rsimb = rareza_de(b)
-    pros, contras = texto_pc(b)
-    pros_html = "".join(f"<li>{p}</li>" for p in pros[:2])
-    con_html = "".join(f"<li>{c}</li>" for c in contras[:2])
-    return f"""      <a class="card-dia {rcls}" href="{pref}dia/{n}/">
-        <div class="cabecera"><h3>{t}</h3><span class="precio-hp">{b['precio']} €</span></div>
-        <div class="tipo-fila"><span class="tipo">{tipo_de(b)}</span><span class="rareza">{rsimb} <b>{rnombre}</b></span></div>
-        <div class="imagen"><img src="{pref}{b['imagen']}" alt="{b['titulo']}" loading="lazy"></div>
-        <div class="datos"><span class="rating">Nota <b>{str(b.get('rating', 0)).replace('.', ',')}★</b> · {fmt(b.get('n_valoraciones') or 0)} val.</span></div>
-        <div class="pc"><div><b>Lo que destacan</b><ul>{pros_html}</ul></div><div class="debilidades"><b>Lo que critican</b><ul>{con_html}</ul></div></div>
-        <div class="pie-carta"><span class="num-carta">Nº {str(n).zfill(3)} / 365</span><span class="ver-carta">Ver carta</span></div>
+    t = nombre_display(b)
+    return f"""      <a class="pieza" href="{pref}dia/{n}/">
+        <div class="p-foto"><img src="{pref}{b['imagen']}" alt="{b['titulo']}" loading="lazy"></div>
+        <div class="p-placa">
+          <span class="p-num">Carta Nº {str(n).zfill(3)} · {tipo_de(b)}</span>
+          <span class="p-nombre">{t}</span>
+          <span class="p-meta">Nota {str(b.get('rating', 0)).replace('.', ',')}★ · {fmt(b.get('n_valoraciones') or 0)} valoraciones</span>
+          <span class="p-precio">{b['precio']} €</span>
+        </div>
       </a>"""
 
-def bloque_producto(b, pref="", titulo_fijo=None, num_carta=None, etiqueta="Carta de colección"):
+def bloque_producto(b, pref="", titulo_fijo=None, num_carta=None, etiqueta="Pieza de la colección"):
     pros, contras = texto_pc(b)
     pros_html = "".join(f"<li>{p}</li>" for p in pros)
     contras_html = "".join(f"<li>{c}</li>" for c in contras)
-    rcls, rnombre, rsimb = rareza_de(b)
     nv = b.get("n_valoraciones") or 0
-    num = f'<span class="num-carta">Nº {str(num_carta).zfill(3)} / 365</span>' if num_carta else ""
-    return f"""      <div class="carta-grande {rcls}">
+    return f"""      <div class="carta-grande">
         <span class="etiqueta">{etiqueta}</span>
-        <div class="cg-cab"><h3>{titulo_fijo or b['titulo'].split(',')[0]}</h3><span class="precio-hp">{b['precio']} €</span></div>
         <div class="cg-foto"><img src="{pref}{b['imagen']}" alt="{b['titulo']}"></div>
         <div class="cg-cuerpo">
-          <div class="tipo-fila"><span class="tipo">{tipo_de(b)}</span><span class="rareza">{rsimb} <b>{rnombre}</b></span></div>
-          <div class="marca">{b.get('marca', '')} · ASIN {b['asin']}</div>
-          <div class="fila-datos"><span class="rating">Nota <b>{estrellas(b.get('rating'))}</b> {str(b.get('rating', 0)).replace('.', ',')} · {fmt(nv)} valoraciones</span></div>
+          <h3>{titulo_fijo or nombre_display(b)}</h3>
+          <span class="cg-meta">{tipo_de(b)} · Nota <b>{str(b.get('rating', 0)).replace('.', ',')}★</b> · {fmt(nv)} valoraciones · {b.get('marca', '')}</span>
+          <div class="cg-precio">{b['precio']} €</div>
           <div class="pc"><div><b>Lo que destacan las compradoras</b><ul>{pros_html}</ul></div><div class="debilidades"><b>Lo que critican</b><ul>{contras_html}</ul></div></div>
           <p class="veredicto">{veredicto(b)}</p>
-          <div class="cg-ctas">{num}<a href="{b['afiliado']}" class="btn-affiliate" target="_blank" rel="sponsored nofollow noopener">Ver precio en Amazon ↗</a></div>
+          <div class="cg-ctas"><a href="{b['afiliado']}" class="btn-affiliate" target="_blank" rel="sponsored nofollow noopener">Ver precio en Amazon ↗</a></div>
         </div>
       </div>"""
 
@@ -299,31 +300,60 @@ def bloque_opiniones(b):
 def generar_home():
     hoy_n = (date.today() - date(ANIO, 1, 1)).days + 1
     b_hoy, _ = bolso_del_dia(hoy_n)
-    b2, _ = bolso_del_dia(hoy_n + 1)
-    b3, _ = bolso_del_dia(hoy_n + 2)
-    ultimos = "\n".join(card_dia(n) for n in range(hoy_n - 1, max(0, hoy_n - 7), -1))
+    ELEGANTES = {"bolso-b071wvnt1j", "bolso-b07h4k1bq6", "bolso-b07nttc9t5",
+                 "bolso-b07r45ghn2", "bolso-b08vvtvvg2", "bolso-b09j19c59y",
+                 "bolso-b0b2ptkqnq", "bolso-b0b58f4r22", "bolso-b0bjdp7sx6",
+                 "bolso-b0c8t57vsf", "bolso-b0cxq1bnvv", "bolso-b0cyt3g3sf",
+                 "bolso-b0cyt4h9q5", "bolso-b0d4c8c7wv", "bolso-b0d62ybwjl",
+                 "bolso-b0dpx68sl5", "bolso-b0drcq7t2c", "bolso-b0f7xjyh4g",
+                 "bolso-b0fg7scz6b", "bolso-b0h25h3c1f"}
+    dias_eleg = []
+    for n in range(1, 366):
+        b, _ = bolso_del_dia(n)
+        if b["id"] in ELEGANTES:
+            dias_eleg.append((n, b))
+    ultimos = "\n".join(card_dia(n) for n, _ in dias_eleg[-7:][::-1])
+    proximos_list = [tup for tup in dias_eleg if tup[0] > hoy_n][:2]
+    if len(proximos_list) < 2:
+        proximos_list += dias_eleg[:2 - len(proximos_list)]
     proximos = "\n".join(
-        f"""        <div class="mini-proximo">
+        f"""        <a class="mini-proximo" href="dia/{n}/">
           <img src="{b['imagen']}" alt="{b['titulo']}" loading="lazy">
-          <div><span class="mini-dia">{chip_dia(hoy_n + i + 1)}</span><p>{b['titulo'][:48]}…</p></div>
-        </div>"""
-        for i, b in enumerate((b2, b3)))
-    # Selección premium: las cartas más valiosas de la colección
-    premium = sorted(BOLSOS, key=lambda b: -(b.get("precio_num") or 0))[:6]
+          <div><span class="mini-dia">{chip_dia(n)}</span><p>{nombre_display(b)}</p></div>
+        </a>"""
+        for n, b in proximos_list)
+    # Selección premium: curaduria manual de las piezas mas hermosas
+    premium = sorted((b for b in BOLSOS if b["id"] in ELEGANTES),
+                     key=lambda b: -(b.get("precio_num") or 0))[:6]
     premium_cards = "\n".join(
-        f"""      <a class="card-dia {rareza_de(b)[0]}" href="bolso/{b['id']}/">
-        <div class="cabecera"><h3>{b['titulo'].split(',')[0]}</h3><span class="precio-hp">{b['precio']} €</span></div>
-        <div class="tipo-fila"><span class="tipo">{tipo_de(b)}</span><span class="rareza">{rareza_de(b)[2]} <b>{rareza_de(b)[1]}</b></span></div>
-        <div class="imagen"><img src="{b['imagen']}" alt="{b['titulo']}" loading="lazy"></div>
-        <div class="datos"><span class="rating">Nota <b>{str(b.get('rating', 0)).replace('.', ',')}★</b> · {fmt(b.get('n_valoraciones') or 0)} val.</span></div>
-        <div class="pie-carta"><span class="num-carta">Ficha completa</span><span class="ver-carta">Ver carta</span></div>
+        f"""      <a class="pieza" href="bolso/{b['id']}/">
+        <div class="p-foto"><img src="{b['imagen']}" alt="{b['titulo']}" loading="lazy"></div>
+        <div class="p-placa">
+          <span class="p-num">Pieza destacada · {tipo_de(b)}</span>
+          <span class="p-nombre">{nombre_display(b)}</span>
+          <span class="p-meta">Nota {str(b.get('rating', 0)).replace('.', ',')}★ · {fmt(b.get('n_valoraciones') or 0)} valoraciones</span>
+          <span class="p-precio">{b['precio']} €</span>
+        </div>
       </a>""" for b in premium)
     pros_hoy, contras_hoy = texto_pc(b_hoy)
-    d_hoy = fecha_de_dia(hoy_n)
-    nombre_hoy = b_hoy["titulo"].split(",")[0]
     pros_html = "".join(f"<li>{p}</li>" for p in pros_hoy[:3])
     con_html = "".join(f"<li>{c}</li>" for c in contras_hoy[:3])
-    rcls_hoy, rnombre_hoy, rsimb_hoy = rareza_de(b_hoy)
+    d_hoy = fecha_de_dia(hoy_n)
+    nombre_hoy = nombre_display(b_hoy)
+    hero_card = f"""<div class="carta-grande">
+            <span class="etiqueta">Bolso del día {hoy_n}</span>
+            <div class="cg-foto"><img src="{b_hoy['imagen']}" alt="{b_hoy['titulo']}"></div>
+            <div class="cg-cuerpo">
+              <h3>{nombre_hoy}</h3>
+              <span class="cg-meta">{tipo_de(b_hoy)} · Nota <b>{str(b_hoy.get('rating', 0)).replace('.', ',')}★</b> · {fmt(b_hoy.get('n_valoraciones') or 0)} valoraciones</span>
+              <div class="cg-precio">{b_hoy['precio']} €</div>
+              <div class="pc"><div><b>Lo que destacan</b><ul>{pros_html}</ul></div><div class="debilidades"><b>Lo que critican</b><ul>{con_html}</ul></div></div>
+              <div class="cg-ctas">
+                <a class="btn negro" href="bolso/{b_hoy['id']}/">Ficha completa →</a>
+                <a class="btn-affiliate" href="{b_hoy['afiliado']}" target="_blank" rel="sponsored nofollow noopener">Amazon ↗</a>
+              </div>
+            </div>
+          </div>"""
 
     html = head_html(
         "El Bolso de Esperanza — Un bolso real cada día del año",
@@ -335,35 +365,22 @@ def generar_home():
 {header("")}
 <main>
 
-  <!-- HERO: LA CARTA DE HOY -->
+  <!-- HERO: LA PIEZA DE HOY -->
   <section class="hero" id="hoy">
     <span class="silueta s1">👜</span>
     <div class="container">
       <div class="hero-grid">
         <div class="hero-txt">
           <span class="chip">El bolso del {d_hoy.day} de {MESES[d_hoy.month-1]} · día {hoy_n} del año</span>
-          <h1><span class="l1">365 días,</span><span class="l2">365 cartas de colección</span></h1>
-          <p class="hero-lead">Un año entero de bolsos reales de Amazon —precio, nota y lo que dicen sus compradoras— repartidos día a día. Colecciónalos todos: el de tu cumpleaños ya existe.</p>
+          <h1><span class="l1">365 días,</span><span class="l2">365 piezas de colección</span></h1>
+          <p class="hero-lead">Un año entero de bolsos reales de Amazon —su foto, su precio y lo que dicen sus compradoras— expuestos uno a uno, como en una galería. La pieza de tu cumpleaños ya está colgada.</p>
           <div class="hero-ctas">
-            <a class="btn vino" href="#hoy-bolso">La carta de hoy ↓</a>
+            <a class="btn vino" href="#hoy-bolso">La pieza de hoy ↓</a>
             <a class="btn marfil" href="buscar/">¿Cuál te tocó nacer? →</a>
           </div>
         </div>
         <div id="hoy-bolso">
-          <div class="carta-grande {rcls_hoy}">
-            <span class="etiqueta">Bolso del día {hoy_n}</span>
-            <div class="cg-cab"><h3>{nombre_hoy}</h3><span class="precio-hp">{b_hoy['precio']} €</span></div>
-            <div class="cg-foto"><img src="{b_hoy['imagen']}" alt="{b_hoy['titulo']}"></div>
-            <div class="cg-cuerpo">
-              <div class="tipo-fila"><span class="tipo">{tipo_de(b_hoy)}</span><span class="rareza">{rsimb_hoy} <b>{rnombre_hoy}</b></span></div>
-              <div class="fila-datos"><span class="rating">Nota <b>{estrellas(b_hoy.get('rating'))}</b> {str(b_hoy.get('rating', 0)).replace('.', ',')} · {fmt(b_hoy.get('n_valoraciones') or 0)} valoraciones</span></div>
-              <div class="pc"><div><b>Lo que destacan</b><ul>{pros_html}</ul></div><div class="debilidades"><b>Lo que critican</b><ul>{con_html}</ul></div></div>
-              <div class="cg-ctas">
-                <a class="btn vino" href="bolso/{b_hoy['id']}/">Ficha completa →</a>
-                <a class="btn-affiliate" href="{b_hoy['afiliado']}" target="_blank" rel="sponsored nofollow noopener">Amazon ↗</a>
-              </div>
-            </div>
-          </div>
+          {hero_card}
         </div>
       </div>
     </div>
@@ -375,8 +392,8 @@ def generar_home():
       <div class="watermark" aria-hidden="true">Luxe</div>
       <div class="sec-inner">
         <span class="sec-label">Selección premium</span>
-        <h2>Las cartas más <em>codiciadas del año</em></h2>
-        <p class="lead">Piel, cuero genuino y diseñadores con nombre propio: las seis piezas más valiosas de la colección. Piezas raras —con brillo propio— para quienes ya saben lo que quieren.</p>
+        <h2>Las piezas más <em>hermosas del año</em></h2>
+        <p class="lead">Escogidas a mano de la colección: cuero noble, líneas limpias y una fotografía cuidada. Las seis favoritas de la casa — de precio firme.</p>
         <div class="grid-dias">
 {premium_cards}
         </div>
@@ -413,7 +430,7 @@ def generar_home():
         <span class="sec-label">Los próximos días</span>
         <h2>Lo que viene <em>después de hoy</em></h2>
         <div class="proximos">{proximos}</div>
-        <span class="sec-label" style="margin-top:46px">Las últimas cartas de la colección</span>
+        <span class="sec-label" style="margin-top:46px">Las últimas piezas expuestas</span>
         <div class="grid-dias">
 {ultimos}
         </div>
@@ -455,7 +472,7 @@ def generar_finder_datos():
         b, _ = bolso_del_dia(n)
         dias.append({
             "n": n, "fecha": fecha_de_dia(n).isoformat(), "id": b["id"],
-            "titulo": b["titulo"].split(",")[0], "precio": b["precio"],
+            "titulo": nombre_display(b), "precio": b["precio"],
             "rating": b.get("rating"), "n_val": b.get("n_valoraciones", 0),
     "tipo": tipo_de(b), "rareza": rareza_de(b)[1], "rsimb": rareza_de(b)[2],
             "imagen": b["imagen"],
@@ -506,7 +523,7 @@ def generar_dia(n):
         cards = "\n".join(
             f"""        <div class="mini-proximo">
           <img src="../..{a['imagen'][len('assets')-6:] if False else '/' + a['imagen']}" alt="{a['titulo']}" loading="lazy">
-          <div><span class="mini-dia">También encaja</span><p>{a['titulo'][:44]}…</p></div>
+          <div><span class="mini-dia">También encaja</span><p>{nombre_display(a)}</p></div>
         </div>""" for a in alternos[:3])
         alternos_html = f"""
   <section class="sec clara">
@@ -547,11 +564,11 @@ def generar_dia(n):
         <a class="volver" href="../../dia/">← El diario</a>
         <article class="entrada-blog">
           <span class="meta-blog" style="color:var(--oro-suave)">{semana}, {fecha_larga(d)} · día {n} de 365</span>
-          <h1>{b['titulo'].split(',')[0]}: <em>el bolso del día {n}</em></h1>
+          <h1>{nombre_display(b)}: <em>el bolso del día {n}</em></h1>
           <p class="resumen" style="color:#E8D2DA;font-style:italic">{t['gancho']} {t['parrafo1']}</p>
           <figure style="margin:28px 0 6px">
-            <img src="../../{b['imagen']}" alt="{b['titulo']}" style="border:2px solid var(--oro-suave);border-radius:12px;width:100%;max-height:460px;object-fit:cover">
-            <figcaption style="font-size:12px;color:#C9A8B6;margin-top:8px;letter-spacing:1px;text-transform:uppercase">Imagen oficial del producto en Amazon — no es un render</figcaption>
+            <img src="../../{b['imagen']}" alt="{b['titulo']}" style="background:#fff;border:1px solid #DCC5CF;padding:12px;width:100%;max-height:480px;object-fit:contain">
+            <figcaption style="font-size:11px;color:#C9A8B6;margin-top:8px;letter-spacing:1.5px;text-transform:uppercase">Pieza nº {str(n).zfill(3)} de la colección · fotografía oficial del producto</figcaption>
           </figure>
           <div class="cuerpo-blog">
             <p>{t['parrafo2']}</p>
@@ -564,7 +581,7 @@ def generar_dia(n):
   <section class="ficha">
     <div class="container">
       <span class="sec-label" style="color:var(--frambuesa-txt)">La carta del día, con datos reales</span>
-{bloque_producto(b, pref="../../", num_carta=n, etiqueta=f"Carta del día Nº {n}")}
+{bloque_producto(b, pref="../../", num_carta=n, etiqueta=f"Pieza del día Nº {n}")}
       <div style="display:flex;justify-content:space-between;margin-top:30px;flex-wrap:wrap;gap:10px">
         <a href="../{prev_}/" style="font-family:var(--hand);font-size:19px;color:var(--frambuesa-txt);text-decoration:none">← Día {prev_}</a>
         <a href="../../bolso/{b['id']}/" style="font-family:var(--hand);font-size:19px;color:var(--frambuesa-txt);text-decoration:none">Ficha del bolso</a>
@@ -629,9 +646,9 @@ def generar_ficha_bolso(b):
       <a class="volver" href="../../">← Portada</a>
       <article>
         <span class="sec-label" style="color:var(--frambuesa-txt);margin-top:18px">Carta de colección · ficha oficial</span>
-        <h1>{b['titulo'].split(',')[0]}</h1>
+        <h1>{nombre_display(b)}</h1>
         <p class="resumen" style="font-style:italic">{b['titulo']}</p>
-{bloque_producto(b, pref="../../", titulo_fijo=b['titulo'])}
+{bloque_producto(b, pref="../../")}
         <p style="font-size:13px;color:var(--gris);margin-top:14px">Aparece en el diario los días: {dias_txt}. Nota media {str(b.get('rating')).replace('.', ',')}★ sobre {fmt(b.get('n_valoraciones') or 0)} valoraciones reales.</p>
       </article>
     </div>
@@ -650,13 +667,11 @@ def generar_opiniones_index():
     for b in con_ops[:18]:
         items = "\n".join(f'      <blockquote class="opinion-amazon">“{o[:280]}”</blockquote>' for o in b["opiniones_amazon"][:2])
         pros, _ = texto_pc(b)
-        tag = f'<span class="tipo">{tipo_de(b)}</span>' if tipo_de(b) != "Bolso" else ""
+        tipo_txt = tipo_de(b) if tipo_de(b) != "Bolso" else ""
+        cola = f" · {tipo_txt}" if tipo_txt else ""
         bloques.append(f"""    <div class="stat-card" style="padding:22px">
-      <div class="tipo-fila" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px">
-        <span style="font-family:var(--hand);font-size:19px;color:var(--frambuesa-txt)">{str(b.get('rating')).replace('.', ',')}★ · {fmt(b.get('n_valoraciones') or 0)} valoraciones</span>
-        {tag}
-      </div>
-      <h2 style="font-family:var(--serif);font-size:clamp(20px,2.6vw,28px);font-weight:700;line-height:1.25">{b['titulo'].split(',')[0]}</h2>
+      <span style="font-family:var(--hand);font-size:19px;color:var(--frambuesa-txt)">{str(b.get('rating')).replace('.', ',')}★ · {fmt(b.get('n_valoraciones') or 0)} valoraciones{cola}</span>
+      <h2 style="font-family:var(--serif);font-size:clamp(20px,2.6vw,28px);font-weight:700;line-height:1.25;margin-top:10px">{nombre_display(b)}</h2>
       <p style="font-size:13px;color:var(--secundario);margin:6px 0 4px">{b['precio']} € · Lo que destacan: {', '.join(pros[:2]).lower() if pros else 'su diseño'}</p>
 {items}
       <p style="margin-top:12px"><a href="../bolso/{b['id']}/" style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--frambuesa-txt);text-decoration:none">Ver su carta →</a></p>
